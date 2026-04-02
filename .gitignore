@@ -6,14 +6,13 @@ dist/
 .env.*.local
 
 # Kotlin / Backend
-backend/build/
-backend/.gradle/
-backend/out/
+backend/target/
 *.class
 *.jar
 
 # IDE
 .idea/
+.claude/
 *.iml
 .vscode/
 *.swp

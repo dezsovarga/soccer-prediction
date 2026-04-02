@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Soccer Prediction API
+  version: 0.1.0
+  description: API for the soccer prediction web application.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+paths:
+  /api/users/me:
+    get:
+      summary: Get current authenticated user
+      tags: [Users]
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Not authenticated
+
+  /api/auth/logout:
+    post:
+      summary: Log out the current user
+      tags: [Auth]
+      responses:
+        '302':
+          description: Redirect to frontend after logout
+
+components:
+  schemas:
+    UserDto:
+      type: object
+      required: [id, email, displayName, role, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        displayName:
+          type: string
+        pictureUrl:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        isActive:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object

@@ -36,6 +36,28 @@ Web application with a React frontend and Kotlin Spring Boot backend, using Post
 - All dates must be in UTC.
 - Error responses must follow a structured format (e.g., `{ error: string, code: string, details?: object }`).
 
+## Testing
+
+### Rules
+
+- Always write unit tests for every new feature before considering it done.
+- Always write integration tests for every REST API endpoint.
+- Tests live next to the code they test, not in a separate top-level folder.
+- Never skip tests with `@Disabled` or `.skip` without a comment explaining why.
+- A feature is not complete until its tests pass.
+
+### Frameworks
+
+- **Frontend**: Vitest + React Testing Library.
+- **Backend**: JUnit 5 + MockK for unit tests, Spring Boot Test for integration tests.
+
+### Milestone Implementation Order
+
+1. Write the backend endpoint + unit tests.
+2. Write the integration test for the endpoint.
+3. Write the frontend component + its tests.
+4. Only mark the milestone done when all tests pass.
+
 ## Rules
 
 - **Never commit secrets or API keys.** Use environment variables or a secrets manager.

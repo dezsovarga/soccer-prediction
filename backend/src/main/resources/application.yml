@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/soccer_prediction
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/api/auth/callback"
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
+
+app:
+  admin-email: ${ADMIN_EMAIL:}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
