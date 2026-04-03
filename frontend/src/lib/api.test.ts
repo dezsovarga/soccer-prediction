@@ -64,7 +64,7 @@ describe('apiFetch', () => {
 
 describe('getLoginUrl', () => {
   it('returns the google oauth2 authorization url', () => {
-    expect(getLoginUrl()).toBe('http://localhost:8080/oauth2/authorization/google');
+    expect(getLoginUrl()).toBe('http://localhost:8080/api/auth/oauth2/authorize/google');
   });
 });
 

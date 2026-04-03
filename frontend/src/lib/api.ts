@@ -35,7 +35,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 }
 
 export function getLoginUrl(): string {
-  return `${API_BASE}/oauth2/authorization/google`;
+  return `${API_BASE}/api/auth/oauth2/authorize/google`;
 }
 
 export function getLogoutUrl(): string {

@@ -15,6 +15,69 @@ Web application with a React frontend and Kotlin Spring Boot backend, using Post
 - Backend uses feature-based package structure (e.g., `com.example.match`, `com.example.user`).
 - Frontend uses path aliases: `@/components`, `@/hooks`, `@/lib`, etc.
 
+## Local Development Setup
+
+### Prerequisites
+
+- **Node 22** — managed via nvm (`nvm use` reads `.nvmrc`)
+- **Java 17+** — required by Spring Boot / Maven
+- **PostgreSQL** — running locally on port 5432
+- **Google OAuth credentials** — create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials), set authorized redirect URI to `http://localhost:8080/api/auth/callback`
+
+### Database
+
+```bash
+createdb soccer_prediction
+```
+
+### Environment Variables
+
+Set these before running the backend (e.g., via shell export or IDE run config):
+
+```
+GOOGLE_CLIENT_ID=<your-google-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+ADMIN_EMAIL=<your-google-email>
+```
+
+Optional (defaults shown):
+
+```
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+FRONTEND_URL=http://localhost:5173
+```
+
+### Starting the Backend
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+Runs on `http://localhost:8080`. JPA auto-creates tables on first run (`ddl-auto: update`).
+
+### Starting the Frontend
+
+```bash
+cd frontend
+nvm use
+npm install
+npm run dev
+```
+
+Runs on `http://localhost:5173`. Talks to backend at `http://localhost:8080` (configurable via `VITE_API_URL`).
+
+### Running Tests
+
+```bash
+# Backend (19 tests — uses H2 in-memory DB, no Postgres needed)
+cd backend && ./mvnw test
+
+# Frontend (18 tests)
+cd frontend && npm test -- --run
+```
+
 ## Code Style
 
 ### Frontend

@@ -51,7 +51,7 @@ describe('LoginPage', () => {
     const link = screen.getByText('Sign in with Google');
     expect(link.closest('a')).toHaveAttribute(
       'href',
-      'http://localhost:8080/oauth2/authorization/google'
+      'http://localhost:8080/api/auth/oauth2/authorize/google'
     );
   });
 
