@@ -5,6 +5,9 @@ import { Layout } from '@/components/layout/layout';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { LoginPage } from '@/pages/login';
 import { DashboardPage } from '@/pages/dashboard';
+import { JoinLeaguePage } from '@/pages/join-league';
+import { LeagueViewPage } from '@/pages/league-view';
+import { AdminLeaguesPage } from '@/pages/admin-leagues';
 import { NotFoundPage } from '@/pages/not-found';
 
 export default function App() {
@@ -16,6 +19,8 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/join" element={<JoinLeaguePage />} />
+            <Route path="/leagues/:id" element={<LeagueViewPage />} />
           </Route>
         </Route>
 
@@ -23,7 +28,7 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<div>Admin Dashboard</div>} />
             <Route path="/admin/users" element={<div>User Management</div>} />
-            <Route path="/admin/leagues" element={<div>League Management</div>} />
+            <Route path="/admin/leagues" element={<AdminLeaguesPage />} />
           </Route>
         </Route>
 
