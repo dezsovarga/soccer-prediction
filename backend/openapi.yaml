@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Soccer Prediction API
-  version: 0.1.0
+  version: 0.2.0
   description: API for the soccer prediction web application.
 
 servers:
@@ -30,6 +30,206 @@ paths:
       responses:
         '302':
           description: Redirect to frontend after logout
+
+  /api/leagues:
+    get:
+      summary: List current user's leagues
+      tags: [Leagues]
+      responses:
+        '200':
+          description: List of leagues the user has joined
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeagueSummaryDto'
+        '401':
+          description: Not authenticated
+
+  /api/leagues/join:
+    post:
+      summary: Join a league by code
+      tags: [Leagues]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinLeagueRequest'
+      responses:
+        '201':
+          description: Successfully joined league
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueSummaryDto'
+        '200':
+          description: Already a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueSummaryDto'
+        '404':
+          description: Invalid join code
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}:
+    get:
+      summary: Get league detail
+      tags: [Leagues]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: League detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueDto'
+        '403':
+          description: Not a league member
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/fixtures:
+    get:
+      summary: Get fixtures for a league
+      tags: [Leagues]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of fixtures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FixtureDto'
+        '403':
+          description: Not a league member
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/standings:
+    get:
+      summary: Get standings for a league
+      tags: [Leagues]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: League standings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StandingDto'
+        '403':
+          description: Not a league member
+        '401':
+          description: Not authenticated
+
+  /api/admin/leagues:
+    get:
+      summary: List all leagues (admin)
+      tags: [Admin]
+      responses:
+        '200':
+          description: All leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeagueDto'
+        '403':
+          description: Not an admin
+    post:
+      summary: Create a league (admin)
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeagueRequest'
+      responses:
+        '201':
+          description: League created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueDto'
+        '403':
+          description: Not an admin
+
+  /api/admin/leagues/{id}:
+    put:
+      summary: Update league settings (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLeagueRequest'
+      responses:
+        '200':
+          description: League updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueDto'
+        '403':
+          description: Not an admin
+
+  /api/admin/leagues/search:
+    get:
+      summary: Search API-Football leagues (admin)
+      tags: [Admin]
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API-Football league search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiFootballLeague'
+        '403':
+          description: Not an admin
 
 components:
   schemas:
@@ -63,3 +263,183 @@ components:
           type: string
         details:
           type: object
+
+    LeagueDto:
+      type: object
+      required: [id, name, apiLeagueId, season, joinCode, exactScorePoints, correctOutcomePoints, wrongPredictionPoints, topScorerBonus, leagueWinnerBonus, memberCount, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        apiLeagueId:
+          type: integer
+        season:
+          type: integer
+        joinCode:
+          type: string
+        exactScorePoints:
+          type: integer
+        correctOutcomePoints:
+          type: integer
+        wrongPredictionPoints:
+          type: integer
+        topScorerBonus:
+          type: integer
+        leagueWinnerBonus:
+          type: integer
+        memberCount:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+
+    LeagueSummaryDto:
+      type: object
+      required: [id, name, season, memberCount]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        season:
+          type: integer
+        memberCount:
+          type: integer
+          format: int64
+
+    CreateLeagueRequest:
+      type: object
+      required: [name, apiLeagueId, season]
+      properties:
+        name:
+          type: string
+        apiLeagueId:
+          type: integer
+        season:
+          type: integer
+        exactScorePoints:
+          type: integer
+          default: 3
+        correctOutcomePoints:
+          type: integer
+          default: 1
+        wrongPredictionPoints:
+          type: integer
+          default: 0
+        topScorerBonus:
+          type: integer
+          default: 10
+        leagueWinnerBonus:
+          type: integer
+          default: 10
+
+    UpdateLeagueRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        exactScorePoints:
+          type: integer
+        correctOutcomePoints:
+          type: integer
+        wrongPredictionPoints:
+          type: integer
+        topScorerBonus:
+          type: integer
+        leagueWinnerBonus:
+          type: integer
+
+    JoinLeagueRequest:
+      type: object
+      required: [joinCode]
+      properties:
+        joinCode:
+          type: string
+
+    FixtureDto:
+      type: object
+      required: [id, apiFixtureId, homeTeam, awayTeam, kickoff, status, matchday]
+      properties:
+        id:
+          type: string
+          format: uuid
+        apiFixtureId:
+          type: integer
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        homeTeamLogo:
+          type: string
+          nullable: true
+        awayTeamLogo:
+          type: string
+          nullable: true
+        kickoff:
+          type: string
+          format: date-time
+        homeScore:
+          type: integer
+          nullable: true
+        awayScore:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [SCHEDULED, LIVE, FINISHED, POSTPONED, CANCELLED]
+        matchday:
+          type: integer
+
+    StandingDto:
+      type: object
+      required: [id, apiTeamId, teamName, rank, points, played, won, drawn, lost, goalsFor, goalsAgainst, goalDiff]
+      properties:
+        id:
+          type: string
+          format: uuid
+        apiTeamId:
+          type: integer
+        teamName:
+          type: string
+        teamLogo:
+          type: string
+          nullable: true
+        rank:
+          type: integer
+        points:
+          type: integer
+        played:
+          type: integer
+        won:
+          type: integer
+        drawn:
+          type: integer
+        lost:
+          type: integer
+        goalsFor:
+          type: integer
+        goalsAgainst:
+          type: integer
+        goalDiff:
+          type: integer
+
+    ApiFootballLeague:
+      type: object
+      properties:
+        leagueId:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        logo:
+          type: string
+          nullable: true
+        seasons:
+          type: array
+          items:
+            type: integer
