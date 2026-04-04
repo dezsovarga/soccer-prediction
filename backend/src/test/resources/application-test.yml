@@ -24,3 +24,6 @@ spring:
 app:
   admin-email: admin@test.com
   frontend-url: http://localhost:5173
+
+apifootball:
+  api-key: test-api-key

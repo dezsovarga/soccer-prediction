@@ -18,7 +18,7 @@ describe('apiFetch', () => {
     await apiFetch('/api/users/me');
 
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:8080/api/users/me',
+      '/api/users/me',
       expect.objectContaining({
         credentials: 'include',
         headers: expect.objectContaining({

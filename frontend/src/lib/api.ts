@@ -1,6 +1,7 @@
-import type { ErrorResponse } from './types';
+import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest } from './types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_URL || '';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 export class ApiError extends Error {
   status: number;
@@ -35,9 +36,54 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 }
 
 export function getLoginUrl(): string {
-  return `${API_BASE}/api/auth/oauth2/authorize/google`;
+  return `${BACKEND_URL}/api/auth/oauth2/authorize/google`;
 }
 
 export function getLogoutUrl(): string {
-  return `${API_BASE}/api/auth/logout`;
+  return `${BACKEND_URL}/api/auth/logout`;
+}
+
+export function fetchMyLeagues(): Promise<LeagueSummaryDto[]> {
+  return apiFetch<LeagueSummaryDto[]>('/api/leagues');
+}
+
+export function fetchLeague(id: string): Promise<LeagueDto> {
+  return apiFetch<LeagueDto>(`/api/leagues/${id}`);
+}
+
+export function fetchFixtures(leagueId: string): Promise<FixtureDto[]> {
+  return apiFetch<FixtureDto[]>(`/api/leagues/${leagueId}/fixtures`);
+}
+
+export function fetchStandings(leagueId: string): Promise<StandingDto[]> {
+  return apiFetch<StandingDto[]>(`/api/leagues/${leagueId}/standings`);
+}
+
+export function joinLeague(joinCode: string): Promise<LeagueSummaryDto> {
+  return apiFetch<LeagueSummaryDto>('/api/leagues/join', {
+    method: 'POST',
+    body: JSON.stringify({ joinCode } satisfies JoinLeagueRequest),
+  });
+}
+
+export function searchApiFootballLeagues(query: string): Promise<ApiFootballLeague[]> {
+  return apiFetch<ApiFootballLeague[]>(`/api/admin/leagues/search?query=${encodeURIComponent(query)}`);
+}
+
+export function createLeague(request: CreateLeagueRequest): Promise<LeagueDto> {
+  return apiFetch<LeagueDto>('/api/admin/leagues', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+export function fetchAllLeagues(): Promise<LeagueDto[]> {
+  return apiFetch<LeagueDto[]>('/api/admin/leagues');
+}
+
+export function updateLeague(id: string, request: Partial<CreateLeagueRequest>): Promise<LeagueDto> {
+  return apiFetch<LeagueDto>(`/api/admin/leagues/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
 }
