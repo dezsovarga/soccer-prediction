@@ -1,5 +1,9 @@
 package com.soccerprediction.league
 
+import com.soccerprediction.fixture.FixtureRepository
+import com.soccerprediction.prediction.LeagueWinnerPickRepository
+import com.soccerprediction.prediction.PredictionRepository
+import com.soccerprediction.prediction.TopScorerPickRepository
 import com.soccerprediction.user.User
 import com.soccerprediction.user.UserRepository
 import com.soccerprediction.user.UserRole
@@ -34,6 +38,18 @@ class LeagueIntegrationTest {
     private lateinit var leagueMemberRepository: LeagueMemberRepository
 
     @Autowired
+    private lateinit var fixtureRepository: FixtureRepository
+
+    @Autowired
+    private lateinit var predictionRepository: PredictionRepository
+
+    @Autowired
+    private lateinit var topScorerPickRepository: TopScorerPickRepository
+
+    @Autowired
+    private lateinit var leagueWinnerPickRepository: LeagueWinnerPickRepository
+
+    @Autowired
     private lateinit var objectMapper: ObjectMapper
 
     private lateinit var adminUser: User
@@ -41,6 +57,10 @@ class LeagueIntegrationTest {
 
     @BeforeEach
     fun setup() {
+        leagueWinnerPickRepository.deleteAll()
+        topScorerPickRepository.deleteAll()
+        predictionRepository.deleteAll()
+        fixtureRepository.deleteAll()
         leagueMemberRepository.deleteAll()
         leagueRepository.deleteAll()
         userRepository.deleteAll()

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Soccer Prediction API
-  version: 0.2.0
+  version: 0.3.0
   description: API for the soccer prediction web application.
 
 servers:
@@ -143,6 +143,189 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/StandingDto'
+        '403':
+          description: Not a league member
+        '401':
+          description: Not authenticated
+
+  /api/predictions/{fixtureId}:
+    put:
+      summary: Create or update a match prediction
+      tags: [Predictions]
+      parameters:
+        - name: fixtureId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        '200':
+          description: Prediction saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionDto'
+        '400':
+          description: Kickoff has passed
+        '403':
+          description: Not a league member
+        '404':
+          description: Fixture not found
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/predictions/me:
+    get:
+      summary: Get current user's predictions for a league
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of predictions with fixture details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PredictionDto'
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/players:
+    get:
+      summary: Get players for a league (for top scorer pick)
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlayerDto'
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/top-scorer-pick:
+    get:
+      summary: Get current user's top scorer pick
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Top scorer pick
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopScorerPickDto'
+        '204':
+          description: No pick set yet
+        '401':
+          description: Not authenticated
+    put:
+      summary: Set top scorer pick
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopScorerPickRequest'
+      responses:
+        '200':
+          description: Pick saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopScorerPickDto'
+        '400':
+          description: Picks are locked
+        '403':
+          description: Not a league member
+        '401':
+          description: Not authenticated
+
+  /api/leagues/{id}/league-winner-pick:
+    get:
+      summary: Get current user's league winner pick
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: League winner pick
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueWinnerPickDto'
+        '204':
+          description: No pick set yet
+        '401':
+          description: Not authenticated
+    put:
+      summary: Set league winner pick
+      tags: [Predictions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeagueWinnerPickRequest'
+      responses:
+        '200':
+          description: Pick saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueWinnerPickDto'
+        '400':
+          description: Picks are locked
         '403':
           description: Not a league member
         '401':
@@ -425,6 +608,115 @@ components:
         goalsAgainst:
           type: integer
         goalDiff:
+          type: integer
+
+    PredictionDto:
+      type: object
+      required: [id, fixtureId, homeScore, awayScore, fixtureHomeTeam, fixtureAwayTeam, fixtureKickoff, fixtureStatus, matchday]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fixtureId:
+          type: string
+          format: uuid
+        homeScore:
+          type: integer
+        awayScore:
+          type: integer
+        pointsEarned:
+          type: integer
+          nullable: true
+        fixtureHomeTeam:
+          type: string
+        fixtureAwayTeam:
+          type: string
+        fixtureHomeScore:
+          type: integer
+          nullable: true
+        fixtureAwayScore:
+          type: integer
+          nullable: true
+        fixtureKickoff:
+          type: string
+          format: date-time
+        fixtureStatus:
+          type: string
+        matchday:
+          type: integer
+
+    PredictionRequest:
+      type: object
+      required: [homeScore, awayScore]
+      properties:
+        homeScore:
+          type: integer
+        awayScore:
+          type: integer
+
+    TopScorerPickDto:
+      type: object
+      required: [id, playerName, apiPlayerId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        playerName:
+          type: string
+        apiPlayerId:
+          type: integer
+        pointsEarned:
+          type: integer
+          nullable: true
+
+    TopScorerPickRequest:
+      type: object
+      required: [playerName, apiPlayerId]
+      properties:
+        playerName:
+          type: string
+        apiPlayerId:
+          type: integer
+
+    LeagueWinnerPickDto:
+      type: object
+      required: [id, teamName, apiTeamId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamName:
+          type: string
+        apiTeamId:
+          type: integer
+        pointsEarned:
+          type: integer
+          nullable: true
+
+    LeagueWinnerPickRequest:
+      type: object
+      required: [teamName, apiTeamId]
+      properties:
+        teamName:
+          type: string
+        apiTeamId:
+          type: integer
+
+    PlayerDto:
+      type: object
+      required: [apiPlayerId, name, apiTeamId]
+      properties:
+        apiPlayerId:
+          type: integer
+        name:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        apiTeamId:
           type: integer
 
     ApiFootballLeague:

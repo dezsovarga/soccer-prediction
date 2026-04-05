@@ -1,11 +1,22 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLeague, useFixtures, useStandings } from '@/hooks/use-leagues';
+import {
+  useMyPredictions,
+  useSavePrediction,
+  usePlayers,
+  useTopScorerPick,
+  useSaveTopScorerPick,
+  useLeagueWinnerPick,
+  useSaveLeagueWinnerPick,
+} from '@/hooks/use-predictions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { buttonVariants } from '@/components/ui/button';
-import type { FixtureDto } from '@/lib/types';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type { FixtureDto, PredictionDto } from '@/lib/types';
 
 function groupByMatchday(fixtures: FixtureDto[]): Map<number, FixtureDto[]> {
   const map = new Map<number, FixtureDto[]>();
@@ -25,16 +36,287 @@ function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destruct
   }
 }
 
+function FixtureCard({
+  fixture,
+  prediction,
+  onSavePrediction,
+  isSaving,
+}: {
+  fixture: FixtureDto;
+  prediction: PredictionDto | undefined;
+  onSavePrediction: (fixtureId: string, homeScore: number, awayScore: number) => void;
+  isSaving: boolean;
+}) {
+  const [homeScore, setHomeScore] = useState<string>(prediction?.homeScore?.toString() ?? '');
+  const [awayScore, setAwayScore] = useState<string>(prediction?.awayScore?.toString() ?? '');
+  const [dirty, setDirty] = useState(false);
+
+  const kickoffPassed = new Date(fixture.kickoff) <= new Date();
+  const canPredict = !kickoffPassed && fixture.status === 'SCHEDULED';
+
+  function handleSave() {
+    const h = parseInt(homeScore, 10);
+    const a = parseInt(awayScore, 10);
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return;
+    onSavePrediction(fixture.id, h, a);
+    setDirty(false);
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border p-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-5 w-5" />}
+          <span className="font-medium">{fixture.homeTeam}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {fixture.status === 'FINISHED' || fixture.status === 'LIVE' ? (
+            <span className="font-bold">
+              {fixture.homeScore} - {fixture.awayScore}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {new Date(fixture.kickoff).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          )}
+          <Badge variant={statusBadgeVariant(fixture.status)}>{fixture.status}</Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{fixture.awayTeam}</span>
+          {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-5 w-5" />}
+        </div>
+      </div>
+
+      {canPredict && (
+        <div className="flex items-center justify-center gap-2 pt-1">
+          <span className="text-xs text-muted-foreground">Your prediction:</span>
+          <Input
+            type="number"
+            min={0}
+            className="w-14 text-center"
+            placeholder="-"
+            value={homeScore}
+            onChange={(e) => { setHomeScore(e.target.value); setDirty(true); }}
+            aria-label={`Home score prediction for ${fixture.homeTeam} vs ${fixture.awayTeam}`}
+          />
+          <span className="text-sm font-medium">-</span>
+          <Input
+            type="number"
+            min={0}
+            className="w-14 text-center"
+            placeholder="-"
+            value={awayScore}
+            onChange={(e) => { setAwayScore(e.target.value); setDirty(true); }}
+            aria-label={`Away score prediction for ${fixture.homeTeam} vs ${fixture.awayTeam}`}
+          />
+          <Button
+            size="sm"
+            disabled={!dirty || isSaving || homeScore === '' || awayScore === ''}
+            onClick={handleSave}
+          >
+            {prediction ? 'Update' : 'Save'}
+          </Button>
+        </div>
+      )}
+
+      {!canPredict && prediction && (
+        <div className="flex items-center justify-center gap-2 pt-1 text-sm">
+          <span className="text-muted-foreground">Your prediction:</span>
+          <span className="font-medium">{prediction.homeScore} - {prediction.awayScore}</span>
+          {prediction.pointsEarned !== null && (
+            <Badge variant={prediction.pointsEarned > 0 ? 'default' : 'outline'}>
+              {prediction.pointsEarned} pts
+            </Badge>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PicksSection({ leagueId }: { leagueId: string }) {
+  const { data: players, isLoading: playersLoading } = usePlayers(leagueId);
+  const { data: standings } = useStandings(leagueId);
+  const { data: topScorerPick } = useTopScorerPick(leagueId);
+  const { data: leagueWinnerPick } = useLeagueWinnerPick(leagueId);
+  const saveTopScorer = useSaveTopScorerPick(leagueId);
+  const saveLeagueWinner = useSaveLeagueWinnerPick(leagueId);
+
+  const [topScorerSearch, setTopScorerSearch] = useState('');
+
+  const filteredPlayers = players?.filter(
+    (p) => p.name.toLowerCase().includes(topScorerSearch.toLowerCase())
+  ) ?? [];
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Top Scorer Pick</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {topScorerPick && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Current pick:</span>
+              <span className="font-medium">{topScorerPick.playerName}</span>
+              {topScorerPick.pointsEarned !== null && (
+                <Badge variant={topScorerPick.pointsEarned > 0 ? 'default' : 'outline'}>
+                  {topScorerPick.pointsEarned} pts
+                </Badge>
+              )}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Input
+              placeholder="Search players..."
+              value={topScorerSearch}
+              onChange={(e) => setTopScorerSearch(e.target.value)}
+              aria-label="Search players for top scorer pick"
+            />
+            {playersLoading && <p className="text-sm text-muted-foreground">Loading players...</p>}
+            {topScorerSearch.length >= 2 && filteredPlayers.length > 0 && (
+              <div className="max-h-48 overflow-y-auto rounded-md border">
+                {filteredPlayers.slice(0, 20).map((player) => (
+                  <button
+                    key={player.apiPlayerId}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      saveTopScorer.mutate({
+                        playerName: player.name,
+                        apiPlayerId: player.apiPlayerId,
+                      });
+                      setTopScorerSearch('');
+                    }}
+                  >
+                    {player.photoUrl && <img src={player.photoUrl} alt="" className="h-6 w-6 rounded-full" />}
+                    <span>{player.name}</span>
+                    {player.position && (
+                      <span className="text-xs text-muted-foreground">({player.position})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            {topScorerSearch.length >= 2 && filteredPlayers.length === 0 && !playersLoading && (
+              <p className="text-sm text-muted-foreground">No players found.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">League Winner Pick</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {leagueWinnerPick && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Current pick:</span>
+              <span className="font-medium">{leagueWinnerPick.teamName}</span>
+              {leagueWinnerPick.pointsEarned !== null && (
+                <Badge variant={leagueWinnerPick.pointsEarned > 0 ? 'default' : 'outline'}>
+                  {leagueWinnerPick.pointsEarned} pts
+                </Badge>
+              )}
+            </div>
+          )}
+          {standings && standings.length > 0 && (
+            <div className="max-h-48 overflow-y-auto rounded-md border">
+              {standings.map((team) => (
+                <button
+                  key={team.apiTeamId}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+                  onClick={() => {
+                    saveLeagueWinner.mutate({
+                      teamName: team.teamName,
+                      apiTeamId: team.apiTeamId,
+                    });
+                  }}
+                >
+                  {team.teamLogo && <img src={team.teamLogo} alt="" className="h-5 w-5" />}
+                  <span>{team.teamName}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {(!standings || standings.length === 0) && (
+            <p className="text-sm text-muted-foreground">No teams available yet.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
+  const sorted = [...predictions].sort(
+    (a, b) => a.matchday - b.matchday || new Date(a.fixtureKickoff).getTime() - new Date(b.fixtureKickoff).getTime()
+  );
+
+  if (sorted.length === 0) {
+    return <p className="text-muted-foreground">No predictions yet. Go to Fixtures to make your predictions.</p>;
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>MD</TableHead>
+          <TableHead>Match</TableHead>
+          <TableHead className="text-center">Score</TableHead>
+          <TableHead className="text-center">Your Prediction</TableHead>
+          <TableHead className="text-center">Points</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {sorted.map((p) => (
+          <TableRow key={p.id}>
+            <TableCell>{p.matchday}</TableCell>
+            <TableCell>{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</TableCell>
+            <TableCell className="text-center">
+              {p.fixtureHomeScore !== null && p.fixtureAwayScore !== null
+                ? `${p.fixtureHomeScore} - ${p.fixtureAwayScore}`
+                : <span className="text-muted-foreground">-</span>}
+            </TableCell>
+            <TableCell className="text-center font-medium">{p.homeScore} - {p.awayScore}</TableCell>
+            <TableCell className="text-center">
+              {p.pointsEarned !== null ? (
+                <Badge variant={p.pointsEarned > 0 ? 'default' : 'outline'}>
+                  {p.pointsEarned}
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 export function LeagueViewPage() {
   const { id } = useParams<{ id: string }>();
   const { data: league, isLoading: leagueLoading } = useLeague(id!);
   const { data: fixtures, isLoading: fixturesLoading } = useFixtures(id!);
   const { data: standings, isLoading: standingsLoading } = useStandings(id!);
+  const { data: predictions } = useMyPredictions(id!);
+  const savePrediction = useSavePrediction(id!);
 
   if (leagueLoading) return <p className="text-muted-foreground">Loading...</p>;
   if (!league) return <p>League not found.</p>;
 
   const matchdays = fixtures ? groupByMatchday(fixtures) : new Map();
+  const predictionsByFixture = new Map(predictions?.map((p) => [p.fixtureId, p]));
+
+  function handleSavePrediction(fixtureId: string, homeScore: number, awayScore: number) {
+    savePrediction.mutate({ fixtureId, request: { homeScore, awayScore } });
+  }
 
   return (
     <div className="space-y-6">
@@ -49,6 +331,8 @@ export function LeagueViewPage() {
       <Tabs defaultValue="fixtures">
         <TabsList>
           <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
+          <TabsTrigger value="predictions">My Predictions</TabsTrigger>
+          <TabsTrigger value="picks">Picks</TabsTrigger>
           <TabsTrigger value="standings">Standings</TabsTrigger>
         </TabsList>
 
@@ -66,46 +350,25 @@ export function LeagueViewPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {matchdayFixtures.map((fixture) => (
-                    <div
+                    <FixtureCard
                       key={fixture.id}
-                      className="flex items-center justify-between rounded-md border p-3"
-                    >
-                      <div className="flex items-center gap-2">
-                        {fixture.homeTeamLogo && (
-                          <img src={fixture.homeTeamLogo} alt="" className="h-5 w-5" />
-                        )}
-                        <span className="font-medium">{fixture.homeTeam}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {fixture.status === 'FINISHED' || fixture.status === 'LIVE' ? (
-                          <span className="font-bold">
-                            {fixture.homeScore} - {fixture.awayScore}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(fixture.kickoff).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        )}
-                        <Badge variant={statusBadgeVariant(fixture.status)}>
-                          {fixture.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{fixture.awayTeam}</span>
-                        {fixture.awayTeamLogo && (
-                          <img src={fixture.awayTeamLogo} alt="" className="h-5 w-5" />
-                        )}
-                      </div>
-                    </div>
+                      fixture={fixture}
+                      prediction={predictionsByFixture.get(fixture.id)}
+                      onSavePrediction={handleSavePrediction}
+                      isSaving={savePrediction.isPending}
+                    />
                   ))}
                 </CardContent>
               </Card>
             ))}
+        </TabsContent>
+
+        <TabsContent value="predictions">
+          <PredictionsTable predictions={predictions ?? []} />
+        </TabsContent>
+
+        <TabsContent value="picks">
+          <PicksSection leagueId={id!} />
         </TabsContent>
 
         <TabsContent value="standings">

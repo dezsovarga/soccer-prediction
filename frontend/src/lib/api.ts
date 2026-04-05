@@ -1,4 +1,4 @@
-import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest } from './types';
+import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest, PredictionDto, PredictionRequest, TopScorerPickDto, TopScorerPickRequest, LeagueWinnerPickDto, LeagueWinnerPickRequest, PlayerDto } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
@@ -83,6 +83,43 @@ export function fetchAllLeagues(): Promise<LeagueDto[]> {
 
 export function updateLeague(id: string, request: Partial<CreateLeagueRequest>): Promise<LeagueDto> {
   return apiFetch<LeagueDto>(`/api/admin/leagues/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+export function savePrediction(fixtureId: string, request: PredictionRequest): Promise<PredictionDto> {
+  return apiFetch<PredictionDto>(`/api/predictions/${fixtureId}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+export function fetchMyPredictions(leagueId: string): Promise<PredictionDto[]> {
+  return apiFetch<PredictionDto[]>(`/api/leagues/${leagueId}/predictions/me`);
+}
+
+export function fetchPlayers(leagueId: string): Promise<PlayerDto[]> {
+  return apiFetch<PlayerDto[]>(`/api/leagues/${leagueId}/players`);
+}
+
+export function fetchTopScorerPick(leagueId: string): Promise<TopScorerPickDto> {
+  return apiFetch<TopScorerPickDto>(`/api/leagues/${leagueId}/top-scorer-pick`);
+}
+
+export function saveTopScorerPick(leagueId: string, request: TopScorerPickRequest): Promise<TopScorerPickDto> {
+  return apiFetch<TopScorerPickDto>(`/api/leagues/${leagueId}/top-scorer-pick`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+export function fetchLeagueWinnerPick(leagueId: string): Promise<LeagueWinnerPickDto> {
+  return apiFetch<LeagueWinnerPickDto>(`/api/leagues/${leagueId}/league-winner-pick`);
+}
+
+export function saveLeagueWinnerPick(leagueId: string, request: LeagueWinnerPickRequest): Promise<LeagueWinnerPickDto> {
+  return apiFetch<LeagueWinnerPickDto>(`/api/leagues/${leagueId}/league-winner-pick`, {
     method: 'PUT',
     body: JSON.stringify(request),
   });

@@ -87,3 +87,55 @@ export interface CreateLeagueRequest {
 export interface JoinLeagueRequest {
   joinCode: string;
 }
+
+export interface PredictionDto {
+  id: string;
+  fixtureId: string;
+  homeScore: number;
+  awayScore: number;
+  pointsEarned: number | null;
+  fixtureHomeTeam: string;
+  fixtureAwayTeam: string;
+  fixtureHomeScore: number | null;
+  fixtureAwayScore: number | null;
+  fixtureKickoff: string;
+  fixtureStatus: string;
+  matchday: number;
+}
+
+export interface PredictionRequest {
+  homeScore: number;
+  awayScore: number;
+}
+
+export interface TopScorerPickDto {
+  id: string;
+  playerName: string;
+  apiPlayerId: number;
+  pointsEarned: number | null;
+}
+
+export interface TopScorerPickRequest {
+  playerName: string;
+  apiPlayerId: number;
+}
+
+export interface LeagueWinnerPickDto {
+  id: string;
+  teamName: string;
+  apiTeamId: number;
+  pointsEarned: number | null;
+}
+
+export interface LeagueWinnerPickRequest {
+  teamName: string;
+  apiTeamId: number;
+}
+
+export interface PlayerDto {
+  apiPlayerId: number;
+  name: string;
+  photoUrl: string | null;
+  position: string | null;
+  apiTeamId: number;
+}

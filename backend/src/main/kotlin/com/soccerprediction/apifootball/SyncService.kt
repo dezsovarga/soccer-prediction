@@ -5,6 +5,7 @@ import com.soccerprediction.fixture.FixtureRepository
 import com.soccerprediction.league.LeagueRepository
 import com.soccerprediction.player.Player
 import com.soccerprediction.player.PlayerRepository
+import com.soccerprediction.prediction.PredictionService
 import com.soccerprediction.standing.Standing
 import com.soccerprediction.standing.StandingRepository
 import org.slf4j.LoggerFactory
@@ -18,7 +19,8 @@ class SyncService(
     private val leagueRepository: LeagueRepository,
     private val fixtureRepository: FixtureRepository,
     private val standingRepository: StandingRepository,
-    private val playerRepository: PlayerRepository
+    private val playerRepository: PlayerRepository,
+    private val predictionService: PredictionService
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -45,6 +47,7 @@ class SyncService(
         for (af in apiFixtures) {
             val existing = fixtureRepository.findByApiFixtureId(af.fixtureId)
             if (existing != null) {
+                val wasNotFinished = existing.status != "FINISHED"
                 existing.homeTeam = af.homeTeam
                 existing.awayTeam = af.awayTeam
                 existing.homeTeamLogo = af.homeTeamLogo
@@ -56,6 +59,10 @@ class SyncService(
                 existing.matchday = af.matchday
                 existing.updatedAt = Instant.now()
                 fixtureRepository.save(existing)
+
+                if (wasNotFinished && af.status == "FINISHED") {
+                    predictionService.calculatePoints(existing.id)
+                }
             } else {
                 fixtureRepository.save(
                     Fixture(
