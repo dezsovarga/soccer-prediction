@@ -1,127 +1,149 @@
 # Handoff Document — Soccer Prediction App
 
-## What Was Built
+## Project Overview
 
-### Project Setup
-- **Monorepo** at `dezsovarga/soccer-prediction` (private GitHub repo)
+A web app where friends predict soccer match scores, top goalscorers, and tournament winners. Users log in with Google, join leagues, and compete on a shared leaderboard. Admin manages leagues, teams, fixtures, and scoring rules.
+
+- **Repo**: `dezsovarga/soccer-prediction` (private GitHub)
 - **Backend**: `/backend` — Kotlin + Spring Boot 3.4.4 + Maven + PostgreSQL
 - **Frontend**: `/frontend` — React 18 + TypeScript + Vite 8 + Tailwind CSS v4 + shadcn/ui v4
-- **Spec**: `spec.md` at project root — full requirements, data model (10 tables), 16 API endpoints, 8 pages, 5 milestones
-- **Conventions**: `CLAUDE.md` — code style, testing rules, shared conventions
-- **Dev script**: `dev.sh` — starts PostgreSQL (Docker), backend, and frontend in one command
+- **Spec**: `spec.md` — full requirements, data model (11 tables), API endpoints, milestones
+- **Conventions**: `CLAUDE.md` — code style, testing rules, milestone implementation order
+- **Dev**: `dev.sh` — starts PostgreSQL (Docker), backend, and frontend in one command
 
-### Milestone 1 — Auth & Project Skeleton (COMPLETE, committed)
+---
 
-**Backend:**
-- Google OAuth2 login via Spring Security
-- `auth/SecurityConfig.kt` — CORS, CSRF disabled, OAuth2 login at `/api/auth/*`, 401 for unauthenticated, ADMIN role on `/api/admin/**`
-- `auth/CustomOAuth2UserService.kt` — creates/updates user in DB during OAuth flow, assigns ADMIN role if email matches `ADMIN_EMAIL` env var
-- `auth/OAuth2LoginSuccessHandler.kt` — redirects to frontend after OAuth
-- `user/` — User entity, UserRepository, UserDto, UserMapper, UserController (`GET /api/users/me`)
-- `common/` — ErrorResponse, GlobalExceptionHandler
-- 19 tests committed (JUnit 5 + MockK + Spring Boot Test + H2)
+## Completed Milestones
 
-**Frontend:**
-- `lib/api.ts` — fetch wrapper with `credentials: "include"`, `ApiError` class
-- `hooks/use-auth.ts` — TanStack Query hook for auth state
-- `components/protected-route.tsx` + `admin-route.tsx` — route guards
-- `components/layout/` — layout, admin-layout, navbar (avatar dropdown, logout), sidebar
-- `pages/` — login, dashboard (placeholder), not-found
-- shadcn/ui v4 components: button, avatar, dropdown-menu, separator
-- 18 tests committed (Vitest + React Testing Library)
+### Milestone 1 — Auth & Project Skeleton ✅ (`515bfc7`, `5787c5e`, `452bce9`)
 
-### Milestone 2 — Leagues, Fixtures & API-Football Sync (COMPLETE, uncommitted)
+- Google OAuth2 login via Spring Security (session cookie, not JWT)
+- `CustomOAuth2UserService` — creates/updates user on OAuth, assigns ADMIN role via `ADMIN_EMAIL` env var
+- User entity, `/api/users/me` endpoint
+- Frontend: protected routes, auth hooks, layout shell (navbar, admin sidebar)
+- OAuth2 scope: `profile, email` (not `openid` — avoids OIDC bypass of custom user service)
+- Callback URL pattern: `/api/auth/callback/{registrationId}`
+- Vite proxy for `/api` → `http://localhost:8080` (cookie handling)
 
-**Backend (new packages, all uncommitted):**
-- `league/` — League + LeagueMember entities, LeagueRepository, LeagueMemberRepository, LeagueService, LeagueController (user endpoints), AdminLeagueController, DTOs + mappers
-- `fixture/` — Fixture entity, FixtureRepository, FixtureDto, FixtureMapper
-- `standing/` — Standing entity, StandingRepository, StandingDto, StandingMapper
-- `player/` — Player entity, PlayerRepository
-- `apifootball/` — ApiFootballConfig, ApiFootballModels, ApiFootballService (HTTP client for API-Football), SyncService (scheduled sync)
-- League tests in `backend/src/test/kotlin/com/soccerprediction/league/`
-- CustomOAuth2UserService test in `backend/src/test/kotlin/com/soccerprediction/auth/`
-- `openapi.yaml` updated with all M2 endpoints
-- **48 backend tests passing**
+### Milestone 2 — Leagues & Join Flow ✅ (`292ad39`, `b40e79e`)
 
-**Frontend (new files, all uncommitted):**
-- `pages/admin-leagues.tsx` — admin league management (search API-Football, create league)
-- `pages/join-league.tsx` — join league by code
-- `pages/league-view.tsx` — fixture list + standings tabs
-- `hooks/use-admin-leagues.ts`, `hooks/use-leagues.ts` — TanStack Query hooks
-- `components/ui/` — badge, card, input, label, table, tabs (shadcn/ui)
-- `App.tsx` updated with new routes
-- `dashboard.tsx` updated to show user's leagues
-- **30 frontend tests passing**
+- League entity + LeagueMember + join code flow
+- API-Football integration: search leagues, sync fixtures/standings/players
+- Fixture, Standing, Player entities + DTOs + mappers
+- Frontend: admin league creation, join league page, league view (fixtures + standings tabs)
+- `SyncService` with `@Scheduled` polling
 
-### OAuth2 Login Fixes (this session, uncommitted)
+### Milestone 3 — Predictions & Scoring ✅ (`1ae2691`)
 
-Fixed three bugs that prevented Google OAuth login from working:
+- Prediction entity + CRUD (editable until kickoff)
+- TopScorerPick + LeagueWinnerPick entities
+- `PredictionService.calculatePoints` — exact score / correct outcome / wrong
+- Frontend: inline prediction inputs on fixtures, picks section (top scorer dropdown, league winner), "My Predictions" tab
 
-1. **Vite proxy for API calls** (`frontend/vite.config.ts`)
-   - Added `server.proxy` for `/api` → `http://localhost:8080` with `changeOrigin: true`
-   - Changed `API_BASE` in `api.ts` to empty string (relative URLs go through proxy)
-   - Login/logout URLs still point directly to `http://localhost:8080` via separate `BACKEND_URL` constant (OAuth flow must not go through proxy)
+### Milestone 4 — Manual League Management ✅ (`ed03039`)
 
-2. **OAuth2 callback URL mismatch** (`backend/src/main/resources/application.yml` + `SecurityConfig.kt`)
-   - Changed `redirect-uri` from `{baseUrl}/api/auth/callback` to `{baseUrl}/api/auth/callback/{registrationId}` — Google now redirects to `/api/auth/callback/google`
-   - Changed `redirectionEndpoint.baseUri` from `/api/auth/callback` to `/api/auth/callback/*` — Spring Security's `OAuth2LoginAuthenticationFilter` now matches the callback URL
-   - **Google Cloud Console** authorized redirect URI updated to: `http://localhost:8080/api/auth/callback/google`
+This was the largest milestone. The free API-Football plan doesn't cover World Cup 2026, so we built a full manual management system.
 
-3. **OIDC vs OAuth2 user service** (`application.yml`)
-   - Removed `openid` from OAuth2 scopes (now `scope: profile, email`)
-   - With `openid`, Spring Security used `OidcUserService` instead of our `CustomOAuth2UserService`, so users were never created in the DB
-   - Without `openid`, the plain OAuth2 flow calls our custom service correctly
+**Key architecture decisions:**
+- `LeagueMode` enum: `MANUAL` | `API_SYNCED` — gates all manual vs API logic
+- Fixture keeps `homeTeam`/`awayTeam` string fields for display (zero frontend fixture rendering changes), plus optional Team FK references for manual leagues
+- Standing computation: `StandingComputeService` rebuilds group standings from FINISHED fixtures on every result entry
+- Result entry triggers: `PredictionService.calculatePoints` + `StandingComputeService.recomputeStandings`
+- Team logos derived from country code via `https://flagcdn.com/w80/{code}.png`
 
-4. **Removed silent error swallowing** (`CustomOAuth2UserService.kt`)
-   - Removed try/catch that silently returned a valid OAuth2User when DB save failed — errors now propagate so OAuth login fails visibly
+**Backend (new/modified):**
+- `team/` package — `Team.kt`, `TeamRepository.kt`, `TeamDto.kt`, `TeamService.kt`, `AdminTeamController.kt`
+- `fixture/AdminFixtureService.kt` + `AdminFixtureController.kt` — fixture CRUD + result entry
+- `standing/StandingComputeService.kt` — recomputes W/D/L/GF/GA/GD/Pts, groups by groupName, ranks by points→GD→GF
+- Made nullable: `League.apiLeagueId`, `Fixture.apiFixtureId`, `Standing.apiTeamId`, `TopScorerPick.apiPlayerId`, `LeagueWinnerPick.apiTeamId`
+- Added: `League.mode`, `Fixture.round`, `Standing.groupName`, `Standing.team` FK
+- `SyncService.syncAll()` filters to `API_SYNCED` leagues only
+- `LeagueService.createLeague` — validates mode, skips sync for MANUAL
 
-5. **Debug logging removed** — was temporarily enabled during debugging, removed after confirming login works
+**Frontend (new/modified):**
+- `admin-leagues.tsx` — Manual/API-Synced toggle, mode badge column, Teams/Fixtures action links
+- `admin-teams.tsx` — team CRUD with flag previews, group assignment
+- `admin-fixtures.tsx` — fixture creation (team selects, kickoff, round), inline result entry
+- `league-view.tsx` — grouped standings by groupName, free-text top scorer for manual leagues
+- `hooks/use-admin-teams.ts`, `hooks/use-admin-fixtures.ts` — TanStack Query mutations with cache invalidation
+- `types.ts` + `api.ts` — all new types and 9 new API functions
 
-## Every Decision Made
+---
+
+## Current Test Counts
+
+- **Backend**: 89 tests passing (`cd backend && ./mvnw test`)
+- **Frontend**: 42 tests passing (`cd frontend && npm test -- --run`)
+
+---
+
+## All Design Decisions
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
+| League mode | `MANUAL` / `API_SYNCED` enum | Free API-Football doesn't cover World Cup 2026; manual is primary mode |
+| Team logos | flagcdn.com via country code | Free, no API key needed, covers all countries |
+| Fixture team display | Keep string fields, add optional Team FKs | Zero frontend fixture rendering changes needed |
+| Standings computation | Recompute from FINISHED fixtures on result entry | Always accurate, delete-and-reinsert approach |
+| Standings ranking | Points → Goal Difference → Goals For → Name | Standard football tiebreaker rules |
+| Result entry flow | `PUT /api/admin/fixtures/{id}/result` → scoring → standings | Single endpoint triggers entire chain |
 | Admin designation | `ADMIN_EMAIL` env var | Simplest, no seed script needed |
-| Player picks (top scorer) | API-Football roster dropdown | Avoids typos/duplicates |
-| Data sync | Scheduled backend cron job (`@Scheduled`) | Simpler than webhooks, predictable |
-| Competitions per league | One leaderboard per league | Simpler, sufficient for friend groups |
-| Leaderboard storage | Computed at query time (SUM) | No denormalized table, always accurate, fine for <50 users |
-| Auth mechanism | Session cookie (JSESSIONID), not JWT | Simpler, Spring Security handles it, HttpOnly + SameSite=Lax |
+| Auth mechanism | Session cookie (JSESSIONID), not JWT | Simpler, Spring Security handles it |
 | Auth flow | Backend-driven redirect | Frontend never touches OAuth tokens |
-| Frontend auth state | Single TanStack Query on `/api/users/me` | 200=authenticated, 401=not, no local state |
-| OAuth2 scope | `profile, email` (no `openid`) | `openid` triggers OIDC flow which bypasses custom OAuth2UserService |
-| Callback URL pattern | `/api/auth/callback/{registrationId}` | Must match Spring Security's `OAuth2LoginAuthenticationFilter` wildcard pattern |
-| API proxy | Vite dev server proxy for `/api` | Eliminates cross-origin cookie issues between ports 5173/8080 |
-| Login URL | Direct to backend (`http://localhost:8080`) | OAuth full-page navigation must not go through Vite proxy (session cookie issues) |
-| Build tool | Maven (was Gradle, migrated) | User preference |
-| Java version | 17 target | Matches local JDK |
+| Frontend auth state | TanStack Query on `/api/users/me` | 200=authenticated, 401=not |
+| OAuth2 scope | `profile, email` (no `openid`) | `openid` triggers OIDC flow bypassing custom user service |
+| API proxy | Vite dev server proxy for `/api` | Eliminates cross-origin cookie issues |
+| Login URL | Direct to backend (not through Vite proxy) | OAuth redirect must not go through proxy |
+| Build tool | Maven | User preference |
+| Java version | 17 | Matches local JDK |
 | Node version | 22 (via .nvmrc) | Required by Vite 8 / shadcn v4 |
+| DB schema management | Hibernate `ddl-auto: update` | Good enough for dev; manual `ALTER TABLE` needed for NOT NULL → nullable changes on existing data |
 | Testing — backend | JUnit 5 + MockK (unit), Spring Boot Test + H2 (integration) | Per CLAUDE.md |
 | Testing — frontend | Vitest + React Testing Library | Per CLAUDE.md |
-| Test location | Next to source files | Per CLAUDE.md |
 
-## Current State
+---
 
-### Test results
-- **Backend**: 48 tests passing (`cd backend && ./mvnw test`)
-- **Frontend**: 30 tests passing (`cd frontend && npm test -- --run`)
+## Known Gotchas
 
-### Login status
-OAuth login flow **verified working** — user can sign in with Google and lands on the dashboard.
+1. **Hibernate `ddl-auto: update` doesn't drop NOT NULL constraints.** When making a column nullable (e.g., `api_league_id`), you must manually run `ALTER TABLE ... ALTER COLUMN ... DROP NOT NULL` on the existing PostgreSQL database. The Docker container DB is: `docker exec soccer-prediction-db psql -U postgres -d soccer_prediction -c "..."`.
 
-### Google Cloud Console
-The authorized redirect URI is `http://localhost:8080/api/auth/callback/google`.
+2. **OAuth2 callback URL**: Google Cloud Console must have `http://localhost:8080/api/auth/callback/google` as authorized redirect URI.
 
-## Where to Pick Up
+3. **Frontend tests with duplicate text**: When a team name appears in both a `<select>` option and a table cell, use `getAllByText()` instead of `getByText()`.
 
-### Next milestone: Milestone 3 — Predictions
-From `spec.md`, this includes:
-- Users submit score predictions for upcoming fixtures
-- Prediction entity + endpoints
-- Prediction submission page in frontend
-- Points calculation based on league scoring rules
+---
 
-### Key files to reference
-- `spec.md` — full requirements, data model, API endpoints, milestones
-- `CLAUDE.md` — code style, testing rules, milestone implementation order
-- `backend/openapi.yaml` — API spec (source of truth)
+## Where to Pick Up Next
+
+### Milestone 5 — Leaderboard & Admin Backoffice
+
+From `spec.md`:
+- **Leaderboard**: ranked list per league showing total points, correct scores, correct outcomes. Computed at query time by summing `points_earned` across Prediction + TopScorerPick + LeagueWinnerPick per user per league.
+- **Admin user management**: view registered users, toggle active/deactivate.
+- **Admin league editing**: edit point system, view member counts.
+- **Responsive mobile design** polish across all pages.
+
+The leaderboard endpoint (`GET /api/leagues/{id}/leaderboard`) and admin user endpoints (`GET /api/admin/users`, `PATCH /api/admin/users/{id}`) are defined in `spec.md` but not yet implemented.
+
+### Milestone 6 — Polish & Deploy
+- Loading states, error handling, empty states
+- Dockerfiles, AWS deployment (ECS/Fargate, S3+CloudFront, RDS)
+
+### Milestone 7 — API-Football Sync (Optional)
+- Only needed if using paid API-Football plans
+
+---
+
+## Key Files Reference
+
+| Purpose | Path |
+|---------|------|
+| Full spec | `spec.md` |
+| Conventions | `CLAUDE.md` |
+| OpenAPI spec | `backend/openapi.yaml` |
+| Dev startup | `dev.sh` |
+| Docker Compose | `docker-compose.yml` |
+| Backend entry | `backend/src/main/kotlin/com/soccerprediction/SoccerPredictionApplication.kt` |
+| Frontend entry | `frontend/src/App.tsx` |
+| Frontend types | `frontend/src/lib/types.ts` |
+| Frontend API | `frontend/src/lib/api.ts` |
