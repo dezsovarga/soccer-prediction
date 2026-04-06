@@ -7,4 +7,5 @@ interface FixtureRepository : JpaRepository<Fixture, UUID> {
     fun findByLeagueIdOrderByKickoff(leagueId: UUID): List<Fixture>
     fun findByLeagueIdAndMatchdayOrderByKickoff(leagueId: UUID, matchday: Int): List<Fixture>
     fun findByApiFixtureId(apiFixtureId: Int): Fixture?
+    fun findByLeagueIdAndStatus(leagueId: UUID, status: String): List<Fixture>
 }

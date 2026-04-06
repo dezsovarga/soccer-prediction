@@ -3,6 +3,7 @@ package com.soccerprediction.league
 fun League.toDto(memberCount: Long) = LeagueDto(
     id = id,
     name = name,
+    mode = mode.name,
     apiLeagueId = apiLeagueId,
     season = season,
     joinCode = joinCode,

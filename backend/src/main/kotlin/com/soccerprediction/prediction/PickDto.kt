@@ -5,25 +5,25 @@ import java.util.UUID
 data class TopScorerPickDto(
     val id: UUID,
     val playerName: String,
-    val apiPlayerId: Int,
+    val apiPlayerId: Int?,
     val pointsEarned: Int?
 )
 
 data class TopScorerPickRequest(
     val playerName: String,
-    val apiPlayerId: Int
+    val apiPlayerId: Int? = null
 )
 
 data class LeagueWinnerPickDto(
     val id: UUID,
     val teamName: String,
-    val apiTeamId: Int,
+    val apiTeamId: Int?,
     val pointsEarned: Int?
 )
 
 data class LeagueWinnerPickRequest(
     val teamName: String,
-    val apiTeamId: Int
+    val apiTeamId: Int? = null
 )
 
 data class PlayerDto(

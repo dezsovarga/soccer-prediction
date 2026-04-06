@@ -139,7 +139,7 @@ function FixtureCard({
   );
 }
 
-function PicksSection({ leagueId }: { leagueId: string }) {
+function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: string }) {
   const { data: players, isLoading: playersLoading } = usePlayers(leagueId);
   const { data: standings } = useStandings(leagueId);
   const { data: topScorerPick } = useTopScorerPick(leagueId);
@@ -148,6 +148,9 @@ function PicksSection({ leagueId }: { leagueId: string }) {
   const saveLeagueWinner = useSaveLeagueWinnerPick(leagueId);
 
   const [topScorerSearch, setTopScorerSearch] = useState('');
+  const [topScorerName, setTopScorerName] = useState('');
+
+  const isManual = leagueMode === 'MANUAL';
 
   const filteredPlayers = players?.filter(
     (p) => p.name.toLowerCase().includes(topScorerSearch.toLowerCase())
@@ -171,41 +174,62 @@ function PicksSection({ leagueId }: { leagueId: string }) {
               )}
             </div>
           )}
-          <div className="space-y-2">
-            <Input
-              placeholder="Search players..."
-              value={topScorerSearch}
-              onChange={(e) => setTopScorerSearch(e.target.value)}
-              aria-label="Search players for top scorer pick"
-            />
-            {playersLoading && <p className="text-sm text-muted-foreground">Loading players...</p>}
-            {topScorerSearch.length >= 2 && filteredPlayers.length > 0 && (
-              <div className="max-h-48 overflow-y-auto rounded-md border">
-                {filteredPlayers.slice(0, 20).map((player) => (
-                  <button
-                    key={player.apiPlayerId}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
-                    onClick={() => {
-                      saveTopScorer.mutate({
-                        playerName: player.name,
-                        apiPlayerId: player.apiPlayerId,
-                      });
-                      setTopScorerSearch('');
-                    }}
-                  >
-                    {player.photoUrl && <img src={player.photoUrl} alt="" className="h-6 w-6 rounded-full" />}
-                    <span>{player.name}</span>
-                    {player.position && (
-                      <span className="text-xs text-muted-foreground">({player.position})</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-            {topScorerSearch.length >= 2 && filteredPlayers.length === 0 && !playersLoading && (
-              <p className="text-sm text-muted-foreground">No players found.</p>
-            )}
-          </div>
+          {isManual ? (
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Enter player name..."
+                value={topScorerName}
+                onChange={(e) => setTopScorerName(e.target.value)}
+                aria-label="Top scorer player name"
+              />
+              <Button
+                size="sm"
+                disabled={!topScorerName.trim()}
+                onClick={() => {
+                  saveTopScorer.mutate({ playerName: topScorerName.trim() });
+                  setTopScorerName('');
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Input
+                placeholder="Search players..."
+                value={topScorerSearch}
+                onChange={(e) => setTopScorerSearch(e.target.value)}
+                aria-label="Search players for top scorer pick"
+              />
+              {playersLoading && <p className="text-sm text-muted-foreground">Loading players...</p>}
+              {topScorerSearch.length >= 2 && filteredPlayers.length > 0 && (
+                <div className="max-h-48 overflow-y-auto rounded-md border">
+                  {filteredPlayers.slice(0, 20).map((player) => (
+                    <button
+                      key={player.apiPlayerId}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+                      onClick={() => {
+                        saveTopScorer.mutate({
+                          playerName: player.name,
+                          apiPlayerId: player.apiPlayerId,
+                        });
+                        setTopScorerSearch('');
+                      }}
+                    >
+                      {player.photoUrl && <img src={player.photoUrl} alt="" className="h-6 w-6 rounded-full" />}
+                      <span>{player.name}</span>
+                      {player.position && (
+                        <span className="text-xs text-muted-foreground">({player.position})</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {topScorerSearch.length >= 2 && filteredPlayers.length === 0 && !playersLoading && (
+                <p className="text-sm text-muted-foreground">No players found.</p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -229,12 +253,12 @@ function PicksSection({ leagueId }: { leagueId: string }) {
             <div className="max-h-48 overflow-y-auto rounded-md border">
               {standings.map((team) => (
                 <button
-                  key={team.apiTeamId}
+                  key={team.id}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
                   onClick={() => {
                     saveLeagueWinner.mutate({
                       teamName: team.teamName,
-                      apiTeamId: team.apiTeamId,
+                      apiTeamId: team.apiTeamId ?? undefined,
                     });
                   }}
                 >
@@ -368,51 +392,71 @@ export function LeagueViewPage() {
         </TabsContent>
 
         <TabsContent value="picks">
-          <PicksSection leagueId={id!} />
+          <PicksSection leagueId={id!} leagueMode={league.mode} />
         </TabsContent>
 
-        <TabsContent value="standings">
+        <TabsContent value="standings" className="space-y-4">
           {standingsLoading && <p className="text-muted-foreground">Loading standings...</p>}
           {standings && standings.length === 0 && (
             <p className="text-muted-foreground">No standings yet. Data will appear after sync.</p>
           )}
-          {standings && standings.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className="text-center">P</TableHead>
-                  <TableHead className="text-center">W</TableHead>
-                  <TableHead className="text-center">D</TableHead>
-                  <TableHead className="text-center">L</TableHead>
-                  <TableHead className="text-center">GF</TableHead>
-                  <TableHead className="text-center">GA</TableHead>
-                  <TableHead className="text-center">GD</TableHead>
-                  <TableHead className="text-center">Pts</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {standings.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.rank}</TableCell>
-                    <TableCell className="flex items-center gap-2">
-                      {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-5" />}
-                      {s.teamName}
-                    </TableCell>
-                    <TableCell className="text-center">{s.played}</TableCell>
-                    <TableCell className="text-center">{s.won}</TableCell>
-                    <TableCell className="text-center">{s.drawn}</TableCell>
-                    <TableCell className="text-center">{s.lost}</TableCell>
-                    <TableCell className="text-center">{s.goalsFor}</TableCell>
-                    <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                    <TableCell className="text-center">{s.goalDiff}</TableCell>
-                    <TableCell className="text-center font-bold">{s.points}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {standings && standings.length > 0 && (() => {
+            const groups = new Map<string, typeof standings>();
+            for (const s of standings) {
+              const key = s.groupName ?? '';
+              const group = groups.get(key) ?? [];
+              group.push(s);
+              groups.set(key, group);
+            }
+            const sortedGroups = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+            return sortedGroups.map(([groupName, groupStandings]) => (
+              <Card key={groupName || '__all'}>
+                {groupName && (
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Group {groupName}</CardTitle>
+                  </CardHeader>
+                )}
+                <CardContent className={groupName ? '' : 'pt-6'}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">#</TableHead>
+                        <TableHead>Team</TableHead>
+                        <TableHead className="text-center">P</TableHead>
+                        <TableHead className="text-center">W</TableHead>
+                        <TableHead className="text-center">D</TableHead>
+                        <TableHead className="text-center">L</TableHead>
+                        <TableHead className="text-center">GF</TableHead>
+                        <TableHead className="text-center">GA</TableHead>
+                        <TableHead className="text-center">GD</TableHead>
+                        <TableHead className="text-center">Pts</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {groupStandings.map((s) => (
+                        <TableRow key={s.id}>
+                          <TableCell>{s.rank}</TableCell>
+                          <TableCell className="flex items-center gap-2">
+                            {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-5" />}
+                            {s.teamName}
+                          </TableCell>
+                          <TableCell className="text-center">{s.played}</TableCell>
+                          <TableCell className="text-center">{s.won}</TableCell>
+                          <TableCell className="text-center">{s.drawn}</TableCell>
+                          <TableCell className="text-center">{s.lost}</TableCell>
+                          <TableCell className="text-center">{s.goalsFor}</TableCell>
+                          <TableCell className="text-center">{s.goalsAgainst}</TableCell>
+                          <TableCell className="text-center">{s.goalDiff}</TableCell>
+                          <TableCell className="text-center font-bold">{s.points}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ));
+          })()}
         </TabsContent>
       </Tabs>
     </div>

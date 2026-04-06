@@ -1,6 +1,7 @@
 package com.soccerprediction.standing
 
 import com.soccerprediction.league.League
+import com.soccerprediction.team.Team
 import jakarta.persistence.*
 import java.time.Instant
 import java.util.UUID
@@ -15,14 +16,21 @@ class Standing(
     @JoinColumn(name = "league_id", nullable = false)
     val league: League,
 
-    @Column(name = "api_team_id", nullable = false)
-    val apiTeamId: Int,
+    @Column(name = "api_team_id")
+    var apiTeamId: Int? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    var team: Team? = null,
 
     @Column(name = "team_name", nullable = false)
     var teamName: String,
 
     @Column(name = "team_logo")
     var teamLogo: String? = null,
+
+    @Column(name = "group_name")
+    var groupName: String? = null,
 
     @Column(nullable = false)
     var rank: Int,

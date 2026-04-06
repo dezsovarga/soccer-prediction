@@ -1,4 +1,4 @@
-import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest, PredictionDto, PredictionRequest, TopScorerPickDto, TopScorerPickRequest, LeagueWinnerPickDto, LeagueWinnerPickRequest, PlayerDto } from './types';
+import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest, PredictionDto, PredictionRequest, TopScorerPickDto, TopScorerPickRequest, LeagueWinnerPickDto, LeagueWinnerPickRequest, PlayerDto, TeamDto, CreateTeamRequest, UpdateTeamRequest, CreateFixtureRequest, UpdateFixtureRequest, EnterResultRequest } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
@@ -120,6 +120,59 @@ export function fetchLeagueWinnerPick(leagueId: string): Promise<LeagueWinnerPic
 
 export function saveLeagueWinnerPick(leagueId: string, request: LeagueWinnerPickRequest): Promise<LeagueWinnerPickDto> {
   return apiFetch<LeagueWinnerPickDto>(`/api/leagues/${leagueId}/league-winner-pick`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+// Admin Team endpoints
+export function fetchTeams(leagueId: string): Promise<TeamDto[]> {
+  return apiFetch<TeamDto[]>(`/api/admin/leagues/${leagueId}/teams`);
+}
+
+export function createTeam(leagueId: string, request: CreateTeamRequest): Promise<TeamDto> {
+  return apiFetch<TeamDto>(`/api/admin/leagues/${leagueId}/teams`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+export function updateTeam(teamId: string, request: UpdateTeamRequest): Promise<TeamDto> {
+  return apiFetch<TeamDto>(`/api/admin/teams/${teamId}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+export async function deleteTeam(teamId: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/teams/${teamId}`, { method: 'DELETE' });
+}
+
+// Admin Fixture endpoints
+export function fetchAdminFixtures(leagueId: string): Promise<FixtureDto[]> {
+  return apiFetch<FixtureDto[]>(`/api/admin/leagues/${leagueId}/fixtures`);
+}
+
+export function createFixture(leagueId: string, request: CreateFixtureRequest): Promise<FixtureDto> {
+  return apiFetch<FixtureDto>(`/api/admin/leagues/${leagueId}/fixtures`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+export function updateFixture(fixtureId: string, request: UpdateFixtureRequest): Promise<FixtureDto> {
+  return apiFetch<FixtureDto>(`/api/admin/fixtures/${fixtureId}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+export async function deleteFixture(fixtureId: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/fixtures/${fixtureId}`, { method: 'DELETE' });
+}
+
+export function enterResult(fixtureId: string, request: EnterResultRequest): Promise<FixtureDto> {
+  return apiFetch<FixtureDto>(`/api/admin/fixtures/${fixtureId}/result`, {
     method: 'PUT',
     body: JSON.stringify(request),
   });

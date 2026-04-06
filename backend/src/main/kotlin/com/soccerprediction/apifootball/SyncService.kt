@@ -26,11 +26,13 @@ class SyncService(
 
     @Scheduled(cron = "0 0 4 * * *")
     fun syncAll() {
-        val leagues = leagueRepository.findAll()
+        val leagues = leagueRepository.findAll().filter {
+            it.mode == com.soccerprediction.league.LeagueMode.API_SYNCED
+        }
         for (league in leagues) {
             try {
-                syncFixtures(league.id.toString(), league.apiLeagueId, league.season)
-                syncStandings(league.id.toString(), league.apiLeagueId, league.season)
+                syncFixtures(league.id.toString(), league.apiLeagueId!!, league.season)
+                syncStandings(league.id.toString(), league.apiLeagueId!!, league.season)
             } catch (e: Exception) {
                 log.error("Failed to sync league ${league.name}: ${e.message}")
             }

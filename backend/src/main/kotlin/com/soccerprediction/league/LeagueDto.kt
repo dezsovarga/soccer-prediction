@@ -6,7 +6,8 @@ import java.util.UUID
 data class LeagueDto(
     val id: UUID,
     val name: String,
-    val apiLeagueId: Int,
+    val mode: String,
+    val apiLeagueId: Int?,
     val season: Int,
     val joinCode: String,
     val exactScorePoints: Int,
@@ -27,7 +28,8 @@ data class LeagueSummaryDto(
 
 data class CreateLeagueRequest(
     val name: String,
-    val apiLeagueId: Int,
+    val mode: String = "API_SYNCED",
+    val apiLeagueId: Int? = null,
     val season: Int,
     val exactScorePoints: Int = 3,
     val correctOutcomePoints: Int = 1,

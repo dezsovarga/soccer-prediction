@@ -4,9 +4,10 @@ import java.util.UUID
 
 data class StandingDto(
     val id: UUID,
-    val apiTeamId: Int,
+    val apiTeamId: Int?,
     val teamName: String,
     val teamLogo: String?,
+    val groupName: String?,
     val rank: Int,
     val points: Int,
     val played: Int,

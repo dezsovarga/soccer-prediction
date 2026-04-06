@@ -5,6 +5,7 @@ fun Standing.toDto() = StandingDto(
     apiTeamId = apiTeamId,
     teamName = teamName,
     teamLogo = teamLogo,
+    groupName = groupName,
     rank = rank,
     points = points,
     played = played,

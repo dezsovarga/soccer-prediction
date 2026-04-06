@@ -11,5 +11,6 @@ fun Fixture.toDto() = FixtureDto(
     homeScore = homeScore,
     awayScore = awayScore,
     status = status,
+    round = round,
     matchday = matchday
 )

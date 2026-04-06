@@ -4,6 +4,11 @@ import jakarta.persistence.*
 import java.time.Instant
 import java.util.UUID
 
+enum class LeagueMode {
+    MANUAL,
+    API_SYNCED
+}
+
 @Entity
 @Table(name = "leagues")
 class League(
@@ -13,8 +18,12 @@ class League(
     @Column(nullable = false)
     var name: String,
 
-    @Column(name = "api_league_id", nullable = false)
-    val apiLeagueId: Int,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val mode: LeagueMode = LeagueMode.API_SYNCED,
+
+    @Column(name = "api_league_id")
+    val apiLeagueId: Int? = null,
 
     @Column(nullable = false)
     val season: Int,

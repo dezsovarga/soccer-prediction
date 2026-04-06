@@ -25,8 +25,8 @@ class TopScorerPick(
     @Column(name = "player_name", nullable = false)
     var playerName: String,
 
-    @Column(name = "api_player_id", nullable = false)
-    var apiPlayerId: Int,
+    @Column(name = "api_player_id")
+    var apiPlayerId: Int? = null,
 
     @Column(name = "points_earned")
     var pointsEarned: Int? = null

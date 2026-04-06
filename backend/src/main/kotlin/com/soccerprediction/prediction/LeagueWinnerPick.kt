@@ -25,8 +25,8 @@ class LeagueWinnerPick(
     @Column(name = "team_name", nullable = false)
     var teamName: String,
 
-    @Column(name = "api_team_id", nullable = false)
-    var apiTeamId: Int,
+    @Column(name = "api_team_id")
+    var apiTeamId: Int? = null,
 
     @Column(name = "points_earned")
     var pointsEarned: Int? = null

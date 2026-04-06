@@ -4,6 +4,8 @@ import com.soccerprediction.fixture.FixtureRepository
 import com.soccerprediction.prediction.LeagueWinnerPickRepository
 import com.soccerprediction.prediction.PredictionRepository
 import com.soccerprediction.prediction.TopScorerPickRepository
+import com.soccerprediction.standing.StandingRepository
+import com.soccerprediction.team.TeamRepository
 import com.soccerprediction.user.User
 import com.soccerprediction.user.UserRepository
 import com.soccerprediction.user.UserRole
@@ -50,6 +52,12 @@ class LeagueIntegrationTest {
     private lateinit var leagueWinnerPickRepository: LeagueWinnerPickRepository
 
     @Autowired
+    private lateinit var standingRepository: StandingRepository
+
+    @Autowired
+    private lateinit var teamRepository: TeamRepository
+
+    @Autowired
     private lateinit var objectMapper: ObjectMapper
 
     private lateinit var adminUser: User
@@ -60,7 +68,9 @@ class LeagueIntegrationTest {
         leagueWinnerPickRepository.deleteAll()
         topScorerPickRepository.deleteAll()
         predictionRepository.deleteAll()
+        standingRepository.deleteAll()
         fixtureRepository.deleteAll()
+        teamRepository.deleteAll()
         leagueMemberRepository.deleteAll()
         leagueRepository.deleteAll()
         userRepository.deleteAll()

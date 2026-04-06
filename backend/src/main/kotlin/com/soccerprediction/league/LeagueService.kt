@@ -11,10 +11,17 @@ class LeagueService(
     private val syncService: SyncService
 ) {
     fun createLeague(request: CreateLeagueRequest): League {
+        val mode = LeagueMode.valueOf(request.mode)
+
+        if (mode == LeagueMode.API_SYNCED) {
+            requireNotNull(request.apiLeagueId) { "apiLeagueId is required for API_SYNCED leagues" }
+        }
+
         val joinCode = generateJoinCode()
         val league = leagueRepository.save(
             League(
                 name = request.name,
+                mode = mode,
                 apiLeagueId = request.apiLeagueId,
                 season = request.season,
                 joinCode = joinCode,
@@ -26,12 +33,14 @@ class LeagueService(
             )
         )
 
-        try {
-            syncService.syncFixtures(league.id.toString(), league.apiLeagueId, league.season)
-            syncService.syncStandings(league.id.toString(), league.apiLeagueId, league.season)
-            syncService.syncSquad(league.id.toString(), league.apiLeagueId, league.season)
-        } catch (e: Exception) {
-            // League is created; sync failures are non-fatal
+        if (mode == LeagueMode.API_SYNCED) {
+            try {
+                syncService.syncFixtures(league.id.toString(), league.apiLeagueId!!, league.season)
+                syncService.syncStandings(league.id.toString(), league.apiLeagueId!!, league.season)
+                syncService.syncSquad(league.id.toString(), league.apiLeagueId!!, league.season)
+            } catch (e: Exception) {
+                // League is created; sync failures are non-fatal
+            }
         }
 
         return league

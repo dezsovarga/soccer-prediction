@@ -1,3 +1,5 @@
+export type LeagueMode = 'MANUAL' | 'API_SYNCED';
+
 export interface UserDto {
   id: string;
   email: string;
@@ -16,7 +18,8 @@ export interface ErrorResponse {
 export interface LeagueDto {
   id: string;
   name: string;
-  apiLeagueId: number;
+  mode: LeagueMode;
+  apiLeagueId: number | null;
   season: number;
   joinCode: string;
   exactScorePoints: number;
@@ -35,9 +38,29 @@ export interface LeagueSummaryDto {
   memberCount: number;
 }
 
+export interface TeamDto {
+  id: string;
+  name: string;
+  countryCode: string | null;
+  logoUrl: string | null;
+  groupName: string | null;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  countryCode?: string;
+  groupName?: string;
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+  countryCode?: string;
+  groupName?: string;
+}
+
 export interface FixtureDto {
   id: string;
-  apiFixtureId: number;
+  apiFixtureId: number | null;
   homeTeam: string;
   awayTeam: string;
   homeTeamLogo: string | null;
@@ -46,14 +69,37 @@ export interface FixtureDto {
   homeScore: number | null;
   awayScore: number | null;
   status: string;
+  round: string | null;
   matchday: number;
+}
+
+export interface CreateFixtureRequest {
+  homeTeamId: string;
+  awayTeamId: string;
+  kickoff: string;
+  round?: string;
+  matchday: number;
+}
+
+export interface UpdateFixtureRequest {
+  homeTeamId?: string;
+  awayTeamId?: string;
+  kickoff?: string;
+  round?: string;
+  matchday?: number;
+}
+
+export interface EnterResultRequest {
+  homeScore: number;
+  awayScore: number;
 }
 
 export interface StandingDto {
   id: string;
-  apiTeamId: number;
+  apiTeamId: number | null;
   teamName: string;
   teamLogo: string | null;
+  groupName: string | null;
   rank: number;
   points: number;
   played: number;
@@ -75,7 +121,8 @@ export interface ApiFootballLeague {
 
 export interface CreateLeagueRequest {
   name: string;
-  apiLeagueId: number;
+  mode?: LeagueMode;
+  apiLeagueId?: number;
   season: number;
   exactScorePoints?: number;
   correctOutcomePoints?: number;
@@ -111,25 +158,25 @@ export interface PredictionRequest {
 export interface TopScorerPickDto {
   id: string;
   playerName: string;
-  apiPlayerId: number;
+  apiPlayerId: number | null;
   pointsEarned: number | null;
 }
 
 export interface TopScorerPickRequest {
   playerName: string;
-  apiPlayerId: number;
+  apiPlayerId?: number;
 }
 
 export interface LeagueWinnerPickDto {
   id: string;
   teamName: string;
-  apiTeamId: number;
+  apiTeamId: number | null;
   pointsEarned: number | null;
 }
 
 export interface LeagueWinnerPickRequest {
   teamName: string;
-  apiTeamId: number;
+  apiTeamId?: number;
 }
 
 export interface PlayerDto {

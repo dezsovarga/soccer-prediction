@@ -1,6 +1,7 @@
 package com.soccerprediction.fixture
 
 import com.soccerprediction.league.League
+import com.soccerprediction.team.Team
 import jakarta.persistence.*
 import java.time.Instant
 import java.util.UUID
@@ -15,8 +16,8 @@ class Fixture(
     @JoinColumn(name = "league_id", nullable = false)
     val league: League,
 
-    @Column(name = "api_fixture_id", nullable = false)
-    val apiFixtureId: Int,
+    @Column(name = "api_fixture_id")
+    val apiFixtureId: Int? = null,
 
     @Column(name = "home_team", nullable = false)
     var homeTeam: String,
@@ -30,6 +31,14 @@ class Fixture(
     @Column(name = "away_team_logo")
     var awayTeamLogo: String? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "home_team_id")
+    var homeTeamRef: Team? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "away_team_id")
+    var awayTeamRef: Team? = null,
+
     @Column(nullable = false)
     var kickoff: Instant,
 
@@ -41,6 +50,9 @@ class Fixture(
 
     @Column(nullable = false)
     var status: String = "SCHEDULED",
+
+    @Column
+    var round: String? = null,
 
     @Column(nullable = false)
     var matchday: Int,

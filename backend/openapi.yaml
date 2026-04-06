@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Soccer Prediction API
-  version: 0.3.0
+  version: 0.4.0
   description: API for the soccer prediction web application.
 
 servers:
@@ -414,6 +414,217 @@ paths:
         '403':
           description: Not an admin
 
+  /api/admin/leagues/{id}/teams:
+    get:
+      summary: List teams in a league (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Teams in the league
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamDto'
+        '403':
+          description: Not an admin
+    post:
+      summary: Add team to league (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamRequest'
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDto'
+        '400':
+          description: League is not manual mode
+        '403':
+          description: Not an admin
+
+  /api/admin/teams/{id}:
+    put:
+      summary: Update team (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamRequest'
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDto'
+        '403':
+          description: Not an admin
+    delete:
+      summary: Remove team (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Team deleted
+        '403':
+          description: Not an admin
+
+  /api/admin/leagues/{id}/fixtures:
+    get:
+      summary: List fixtures in a league (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fixtures in the league
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FixtureDto'
+        '403':
+          description: Not an admin
+    post:
+      summary: Create fixture (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFixtureRequest'
+      responses:
+        '201':
+          description: Fixture created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixtureDto'
+        '400':
+          description: League is not manual mode
+        '403':
+          description: Not an admin
+
+  /api/admin/fixtures/{id}:
+    put:
+      summary: Update fixture (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFixtureRequest'
+      responses:
+        '200':
+          description: Fixture updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixtureDto'
+        '403':
+          description: Not an admin
+    delete:
+      summary: Remove fixture (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Fixture deleted
+        '403':
+          description: Not an admin
+
+  /api/admin/fixtures/{id}/result:
+    put:
+      summary: Enter match result (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterResultRequest'
+      responses:
+        '200':
+          description: Result entered, scoring triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixtureDto'
+        '403':
+          description: Not an admin
+
 components:
   schemas:
     UserDto:
@@ -449,15 +660,19 @@ components:
 
     LeagueDto:
       type: object
-      required: [id, name, apiLeagueId, season, joinCode, exactScorePoints, correctOutcomePoints, wrongPredictionPoints, topScorerBonus, leagueWinnerBonus, memberCount, createdAt]
+      required: [id, name, mode, season, joinCode, exactScorePoints, correctOutcomePoints, wrongPredictionPoints, topScorerBonus, leagueWinnerBonus, memberCount, createdAt]
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        mode:
+          type: string
+          enum: [MANUAL, API_SYNCED]
         apiLeagueId:
           type: integer
+          nullable: true
         season:
           type: integer
         joinCode:
@@ -496,12 +711,17 @@ components:
 
     CreateLeagueRequest:
       type: object
-      required: [name, apiLeagueId, season]
+      required: [name, season]
       properties:
         name:
           type: string
+        mode:
+          type: string
+          enum: [MANUAL, API_SYNCED]
+          default: API_SYNCED
         apiLeagueId:
           type: integer
+          nullable: true
         season:
           type: integer
         exactScorePoints:
@@ -543,15 +763,56 @@ components:
         joinCode:
           type: string
 
+    TeamDto:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        countryCode:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        groupName:
+          type: string
+          nullable: true
+
+    CreateTeamRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        countryCode:
+          type: string
+        groupName:
+          type: string
+
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        countryCode:
+          type: string
+        groupName:
+          type: string
+
     FixtureDto:
       type: object
-      required: [id, apiFixtureId, homeTeam, awayTeam, kickoff, status, matchday]
+      required: [id, homeTeam, awayTeam, kickoff, status, matchday]
       properties:
         id:
           type: string
           format: uuid
         apiFixtureId:
           type: integer
+          nullable: true
         homeTeam:
           type: string
         awayTeam:
@@ -574,21 +835,72 @@ components:
         status:
           type: string
           enum: [SCHEDULED, LIVE, FINISHED, POSTPONED, CANCELLED]
+        round:
+          type: string
+          nullable: true
         matchday:
+          type: integer
+
+    CreateFixtureRequest:
+      type: object
+      required: [homeTeamId, awayTeamId, kickoff, matchday]
+      properties:
+        homeTeamId:
+          type: string
+          format: uuid
+        awayTeamId:
+          type: string
+          format: uuid
+        kickoff:
+          type: string
+          format: date-time
+        round:
+          type: string
+        matchday:
+          type: integer
+
+    UpdateFixtureRequest:
+      type: object
+      properties:
+        homeTeamId:
+          type: string
+          format: uuid
+        awayTeamId:
+          type: string
+          format: uuid
+        kickoff:
+          type: string
+          format: date-time
+        round:
+          type: string
+        matchday:
+          type: integer
+
+    EnterResultRequest:
+      type: object
+      required: [homeScore, awayScore]
+      properties:
+        homeScore:
+          type: integer
+        awayScore:
           type: integer
 
     StandingDto:
       type: object
-      required: [id, apiTeamId, teamName, rank, points, played, won, drawn, lost, goalsFor, goalsAgainst, goalDiff]
+      required: [id, teamName, rank, points, played, won, drawn, lost, goalsFor, goalsAgainst, goalDiff]
       properties:
         id:
           type: string
           format: uuid
         apiTeamId:
           type: integer
+          nullable: true
         teamName:
           type: string
         teamLogo:
+          type: string
+          nullable: true
+        groupName:
           type: string
           nullable: true
         rank:
@@ -656,7 +968,7 @@ components:
 
     TopScorerPickDto:
       type: object
-      required: [id, playerName, apiPlayerId]
+      required: [id, playerName]
       properties:
         id:
           type: string
@@ -665,13 +977,14 @@ components:
           type: string
         apiPlayerId:
           type: integer
+          nullable: true
         pointsEarned:
           type: integer
           nullable: true
 
     TopScorerPickRequest:
       type: object
-      required: [playerName, apiPlayerId]
+      required: [playerName]
       properties:
         playerName:
           type: string
@@ -680,7 +993,7 @@ components:
 
     LeagueWinnerPickDto:
       type: object
-      required: [id, teamName, apiTeamId]
+      required: [id, teamName]
       properties:
         id:
           type: string
@@ -689,13 +1002,14 @@ components:
           type: string
         apiTeamId:
           type: integer
+          nullable: true
         pointsEarned:
           type: integer
           nullable: true
 
     LeagueWinnerPickRequest:
       type: object
-      required: [teamName, apiTeamId]
+      required: [teamName]
       properties:
         teamName:
           type: string

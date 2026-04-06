@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminLeaguesPage } from './admin-leagues';
@@ -21,6 +21,7 @@ function renderWithRouter() {
 
 describe('AdminLeaguesPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockedUseSearchApiFootballLeagues.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -31,7 +32,7 @@ describe('AdminLeaguesPage', () => {
     } as unknown as ReturnType<typeof useCreateLeague>);
   });
 
-  it('shows page title and search input', () => {
+  it('shows page title and manual creation form by default', () => {
     mockedUseAdminLeagues.mockReturnValue({
       data: [],
       isLoading: false,
@@ -40,15 +41,17 @@ describe('AdminLeaguesPage', () => {
     renderWithRouter();
 
     expect(screen.getByText('League Management')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('e.g. Premier League, La Liga...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('e.g. World Cup 2026')).toBeInTheDocument();
+    expect(screen.getByText('Create Manual League')).toBeInTheDocument();
   });
 
-  it('shows existing leagues in table', () => {
+  it('shows existing leagues in table with mode badge', () => {
     mockedUseAdminLeagues.mockReturnValue({
       data: [
         {
           id: 'l1',
           name: 'Premier League',
+          mode: 'API_SYNCED',
           apiLeagueId: 39,
           season: 2026,
           joinCode: 'ABC12345',
@@ -68,7 +71,35 @@ describe('AdminLeaguesPage', () => {
 
     expect(screen.getByText('Premier League')).toBeInTheDocument();
     expect(screen.getByText('ABC12345')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('API')).toBeInTheDocument();
+  });
+
+  it('shows Teams/Fixtures links for manual leagues', () => {
+    mockedUseAdminLeagues.mockReturnValue({
+      data: [
+        {
+          id: 'l1',
+          name: 'World Cup 2026',
+          mode: 'MANUAL',
+          apiLeagueId: null,
+          season: 2026,
+          joinCode: 'WC2026',
+          exactScorePoints: 3,
+          correctOutcomePoints: 1,
+          wrongPredictionPoints: 0,
+          topScorerBonus: 10,
+          leagueWinnerBonus: 10,
+          memberCount: 5,
+          createdAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      isLoading: false,
+    } as ReturnType<typeof useAdminLeagues>);
+
+    renderWithRouter();
+
+    expect(screen.getByText('Teams')).toBeInTheDocument();
+    expect(screen.getByText('Fixtures')).toBeInTheDocument();
   });
 
   it('shows empty state when no leagues exist', () => {

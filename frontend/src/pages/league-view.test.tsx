@@ -31,6 +31,7 @@ const mockedUseSaveLeagueWinnerPick = vi.mocked(useSaveLeagueWinnerPick);
 const leagueData = {
   id: 'abc-123',
   name: 'Premier League',
+  mode: 'API_SYNCED' as const,
   apiLeagueId: 39,
   season: 2026,
   joinCode: 'ABC',
