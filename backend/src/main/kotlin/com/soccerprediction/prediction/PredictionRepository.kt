@@ -8,4 +8,5 @@ interface PredictionRepository : JpaRepository<Prediction, UUID> {
     fun findByUserIdAndFixtureLeagueId(userId: UUID, leagueId: UUID): List<Prediction>
     fun findByFixtureId(fixtureId: UUID): List<Prediction>
     fun findByFixtureLeagueIdAndPointsEarnedIsNull(leagueId: UUID): List<Prediction>
+    fun findByFixtureLeagueId(leagueId: UUID): List<Prediction>
 }

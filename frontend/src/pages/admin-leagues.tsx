@@ -1,13 +1,88 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAdminLeagues, useSearchApiFootballLeagues, useCreateLeague } from '@/hooks/use-admin-leagues';
+import { useAdminLeagues, useSearchApiFootballLeagues, useCreateLeague, useUpdateLeague } from '@/hooks/use-admin-leagues';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { ApiFootballLeague, LeagueMode } from '@/lib/types';
+import type { ApiFootballLeague, LeagueDto, LeagueMode } from '@/lib/types';
+
+function EditLeagueForm({
+  league,
+  onClose,
+}: {
+  league: LeagueDto;
+  onClose: () => void;
+}) {
+  const updateMutation = useUpdateLeague();
+  const [name, setName] = useState(league.name);
+  const [exactScorePoints, setExactScorePoints] = useState(league.exactScorePoints.toString());
+  const [correctOutcomePoints, setCorrectOutcomePoints] = useState(league.correctOutcomePoints.toString());
+  const [wrongPredictionPoints, setWrongPredictionPoints] = useState(league.wrongPredictionPoints.toString());
+  const [topScorerBonus, setTopScorerBonus] = useState(league.topScorerBonus.toString());
+  const [leagueWinnerBonus, setLeagueWinnerBonus] = useState(league.leagueWinnerBonus.toString());
+
+  function handleSave() {
+    updateMutation.mutate(
+      {
+        id: league.id,
+        request: {
+          name: name.trim(),
+          exactScorePoints: parseInt(exactScorePoints, 10),
+          correctOutcomePoints: parseInt(correctOutcomePoints, 10),
+          wrongPredictionPoints: parseInt(wrongPredictionPoints, 10),
+          topScorerBonus: parseInt(topScorerBonus, 10),
+          leagueWinnerBonus: parseInt(leagueWinnerBonus, 10),
+        },
+      },
+      { onSuccess: onClose }
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Edit League: {league.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="edit-name">League Name</Label>
+          <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="edit-exact">Exact Score Pts</Label>
+            <Input id="edit-exact" type="number" value={exactScorePoints} onChange={(e) => setExactScorePoints(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-outcome">Correct Outcome Pts</Label>
+            <Input id="edit-outcome" type="number" value={correctOutcomePoints} onChange={(e) => setCorrectOutcomePoints(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-wrong">Wrong Prediction Pts</Label>
+            <Input id="edit-wrong" type="number" value={wrongPredictionPoints} onChange={(e) => setWrongPredictionPoints(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-topscorer">Top Scorer Bonus</Label>
+            <Input id="edit-topscorer" type="number" value={topScorerBonus} onChange={(e) => setTopScorerBonus(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-winner">Winner Bonus</Label>
+            <Input id="edit-winner" type="number" value={leagueWinnerBonus} onChange={(e) => setLeagueWinnerBonus(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={handleSave} disabled={updateMutation.isPending || !name.trim()}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+          </Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function AdminLeaguesPage() {
   const { data: leagues, isLoading } = useAdminLeagues();
@@ -19,6 +94,7 @@ export function AdminLeaguesPage() {
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [leagueName, setLeagueName] = useState('');
   const [manualSeason, setManualSeason] = useState(new Date().getFullYear().toString());
+  const [editingLeague, setEditingLeague] = useState<LeagueDto | null>(null);
 
   const handleSelect = (league: ApiFootballLeague) => {
     setSelectedLeague(league);
@@ -243,16 +319,21 @@ export function AdminLeaguesPage() {
                     </TableCell>
                     <TableCell>{league.memberCount}</TableCell>
                     <TableCell>
-                      {league.mode === 'MANUAL' && (
-                        <div className="flex gap-2">
-                          <Link to={`/admin/leagues/${league.id}/teams`}>
-                            <Button variant="outline" size="sm">Teams</Button>
-                          </Link>
-                          <Link to={`/admin/leagues/${league.id}/fixtures`}>
-                            <Button variant="outline" size="sm">Fixtures</Button>
-                          </Link>
-                        </div>
-                      )}
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setEditingLeague(league)}>
+                          Edit
+                        </Button>
+                        {league.mode === 'MANUAL' && (
+                          <>
+                            <Link to={`/admin/leagues/${league.id}/teams`}>
+                              <Button variant="outline" size="sm">Teams</Button>
+                            </Link>
+                            <Link to={`/admin/leagues/${league.id}/fixtures`}>
+                              <Button variant="outline" size="sm">Fixtures</Button>
+                            </Link>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -261,6 +342,12 @@ export function AdminLeaguesPage() {
           )}
         </CardContent>
       </Card>
+      {editingLeague && (
+        <EditLeagueForm
+          league={editingLeague}
+          onClose={() => setEditingLeague(null)}
+        />
+      )}
     </div>
   );
 }

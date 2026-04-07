@@ -7,4 +7,5 @@ interface LeagueMemberRepository : JpaRepository<LeagueMember, UUID> {
     fun findByUserId(userId: UUID): List<LeagueMember>
     fun findByLeagueIdAndUserId(leagueId: UUID, userId: UUID): LeagueMember?
     fun countByLeagueId(leagueId: UUID): Long
+    fun findByLeagueId(leagueId: UUID): List<LeagueMember>
 }

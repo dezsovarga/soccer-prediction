@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useLeague, useFixtures, useStandings } from '@/hooks/use-leagues';
+import { useLeague, useFixtures, useStandings, useLeaderboard } from '@/hooks/use-leagues';
 import {
   useMyPredictions,
   useSavePrediction,
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { FixtureDto, PredictionDto } from '@/lib/types';
+import type { FixtureDto, PredictionDto, LeaderboardEntryDto } from '@/lib/types';
 
 function groupByMatchday(fixtures: FixtureDto[]): Map<number, FixtureDto[]> {
   const map = new Map<number, FixtureDto[]>();
@@ -324,12 +324,60 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
   );
 }
 
+function LeaderboardTable({ entries, isLoading }: { entries: LeaderboardEntryDto[] | undefined; isLoading: boolean }) {
+  if (isLoading) return <p className="text-muted-foreground">Loading leaderboard...</p>;
+  if (!entries || entries.length === 0) {
+    return <p className="text-muted-foreground">No leaderboard data yet. Points will appear once matches are scored.</p>;
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-10">#</TableHead>
+          <TableHead>Player</TableHead>
+          <TableHead className="text-center">Exact</TableHead>
+          <TableHead className="text-center">Correct</TableHead>
+          <TableHead className="text-center">Top Scorer</TableHead>
+          <TableHead className="text-center">Winner</TableHead>
+          <TableHead className="text-center">Total</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {entries.map((entry) => (
+          <TableRow key={entry.userId}>
+            <TableCell className="font-medium">{entry.rank}</TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                {entry.pictureUrl && (
+                  <img src={entry.pictureUrl} alt="" className="h-6 w-6 rounded-full" />
+                )}
+                <span>{entry.displayName}</span>
+              </div>
+            </TableCell>
+            <TableCell className="text-center">{entry.correctScores}</TableCell>
+            <TableCell className="text-center">{entry.correctOutcomes}</TableCell>
+            <TableCell className="text-center">
+              {entry.topScorerPoints !== null ? entry.topScorerPoints : '-'}
+            </TableCell>
+            <TableCell className="text-center">
+              {entry.leagueWinnerPoints !== null ? entry.leagueWinnerPoints : '-'}
+            </TableCell>
+            <TableCell className="text-center font-bold">{entry.totalPoints}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 export function LeagueViewPage() {
   const { id } = useParams<{ id: string }>();
   const { data: league, isLoading: leagueLoading } = useLeague(id!);
   const { data: fixtures, isLoading: fixturesLoading } = useFixtures(id!);
   const { data: standings, isLoading: standingsLoading } = useStandings(id!);
   const { data: predictions } = useMyPredictions(id!);
+  const { data: leaderboard, isLoading: leaderboardLoading } = useLeaderboard(id!);
   const savePrediction = useSavePrediction(id!);
 
   if (leagueLoading) return <p className="text-muted-foreground">Loading...</p>;
@@ -357,6 +405,7 @@ export function LeagueViewPage() {
           <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
           <TabsTrigger value="predictions">My Predictions</TabsTrigger>
           <TabsTrigger value="picks">Picks</TabsTrigger>
+          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           <TabsTrigger value="standings">Standings</TabsTrigger>
         </TabsList>
 
@@ -393,6 +442,10 @@ export function LeagueViewPage() {
 
         <TabsContent value="picks">
           <PicksSection leagueId={id!} leagueMode={league.mode} />
+        </TabsContent>
+
+        <TabsContent value="leaderboard">
+          <LeaderboardTable entries={leaderboard} isLoading={leaderboardLoading} />
         </TabsContent>
 
         <TabsContent value="standings" className="space-y-4">

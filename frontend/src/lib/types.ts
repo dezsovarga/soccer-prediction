@@ -186,3 +186,39 @@ export interface PlayerDto {
   position: string | null;
   apiTeamId: number;
 }
+
+export interface LeaderboardEntryDto {
+  userId: string;
+  displayName: string;
+  pictureUrl: string | null;
+  rank: number;
+  totalPoints: number;
+  correctScores: number;
+  correctOutcomes: number;
+  wrongPredictions: number;
+  topScorerPoints: number | null;
+  leagueWinnerPoints: number | null;
+}
+
+export interface AdminUserDto {
+  id: string;
+  email: string;
+  displayName: string;
+  pictureUrl: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface UpdateUserRequest {
+  isActive?: boolean;
+}
+
+export interface UpdateLeagueRequest {
+  name?: string;
+  exactScorePoints?: number;
+  correctOutcomePoints?: number;
+  wrongPredictionPoints?: number;
+  topScorerBonus?: number;
+  leagueWinnerBonus?: number;
+}

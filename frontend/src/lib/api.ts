@@ -1,4 +1,4 @@
-import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest, PredictionDto, PredictionRequest, TopScorerPickDto, TopScorerPickRequest, LeagueWinnerPickDto, LeagueWinnerPickRequest, PlayerDto, TeamDto, CreateTeamRequest, UpdateTeamRequest, CreateFixtureRequest, UpdateFixtureRequest, EnterResultRequest } from './types';
+import type { ErrorResponse, LeagueSummaryDto, LeagueDto, FixtureDto, StandingDto, ApiFootballLeague, CreateLeagueRequest, JoinLeagueRequest, PredictionDto, PredictionRequest, TopScorerPickDto, TopScorerPickRequest, LeagueWinnerPickDto, LeagueWinnerPickRequest, PlayerDto, TeamDto, CreateTeamRequest, UpdateTeamRequest, CreateFixtureRequest, UpdateFixtureRequest, EnterResultRequest, LeaderboardEntryDto, AdminUserDto, UpdateUserRequest, UpdateLeagueRequest } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
@@ -173,6 +173,31 @@ export async function deleteFixture(fixtureId: string): Promise<void> {
 
 export function enterResult(fixtureId: string, request: EnterResultRequest): Promise<FixtureDto> {
   return apiFetch<FixtureDto>(`/api/admin/fixtures/${fixtureId}/result`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  });
+}
+
+// Leaderboard
+export function fetchLeaderboard(leagueId: string): Promise<LeaderboardEntryDto[]> {
+  return apiFetch<LeaderboardEntryDto[]>(`/api/leagues/${leagueId}/leaderboard`);
+}
+
+// Admin User endpoints
+export function fetchAdminUsers(): Promise<AdminUserDto[]> {
+  return apiFetch<AdminUserDto[]>('/api/admin/users');
+}
+
+export function updateUser(id: string, request: UpdateUserRequest): Promise<AdminUserDto> {
+  return apiFetch<AdminUserDto>(`/api/admin/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(request),
+  });
+}
+
+// Admin League update (typed)
+export function updateLeagueSettings(id: string, request: UpdateLeagueRequest): Promise<LeagueDto> {
+  return apiFetch<LeagueDto>(`/api/admin/leagues/${id}`, {
     method: 'PUT',
     body: JSON.stringify(request),
   });

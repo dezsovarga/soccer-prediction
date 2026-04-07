@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchAllLeagues, createLeague, searchApiFootballLeagues } from '@/lib/api';
-import type { CreateLeagueRequest } from '@/lib/types';
+import { fetchAllLeagues, createLeague, searchApiFootballLeagues, updateLeagueSettings } from '@/lib/api';
+import type { CreateLeagueRequest, UpdateLeagueRequest } from '@/lib/types';
 
 export function useAdminLeagues() {
   return useQuery({
@@ -21,6 +21,17 @@ export function useCreateLeague() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: CreateLeagueRequest) => createLeague(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'leagues'] });
+    },
+  });
+}
+
+export function useUpdateLeague() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, request }: { id: string; request: UpdateLeagueRequest }) =>
+      updateLeagueSettings(id, request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'leagues'] });
     },

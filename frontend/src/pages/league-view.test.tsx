@@ -6,7 +6,7 @@ import { LeagueViewPage } from './league-view';
 vi.mock('@/hooks/use-leagues');
 vi.mock('@/hooks/use-predictions');
 
-import { useLeague, useFixtures, useStandings } from '@/hooks/use-leagues';
+import { useLeague, useFixtures, useStandings, useLeaderboard } from '@/hooks/use-leagues';
 import {
   useMyPredictions,
   useSavePrediction,
@@ -20,6 +20,7 @@ import {
 const mockedUseLeague = vi.mocked(useLeague);
 const mockedUseFixtures = vi.mocked(useFixtures);
 const mockedUseStandings = vi.mocked(useStandings);
+const mockedUseLeaderboard = vi.mocked(useLeaderboard);
 const mockedUseMyPredictions = vi.mocked(useMyPredictions);
 const mockedUseSavePrediction = vi.mocked(useSavePrediction);
 const mockedUsePlayers = vi.mocked(usePlayers);
@@ -59,6 +60,10 @@ function setupDefaultMocks() {
     data: [],
     isLoading: false,
   } as ReturnType<typeof useStandings>);
+  mockedUseLeaderboard.mockReturnValue({
+    data: [],
+    isLoading: false,
+  } as ReturnType<typeof useLeaderboard>);
   mockedUseMyPredictions.mockReturnValue({
     data: [],
   } as ReturnType<typeof useMyPredictions>);
@@ -118,6 +123,7 @@ describe('LeagueViewPage', () => {
     expect(screen.getByText('Fixtures')).toBeInTheDocument();
     expect(screen.getByText('My Predictions')).toBeInTheDocument();
     expect(screen.getByText('Picks')).toBeInTheDocument();
+    expect(screen.getByText('Leaderboard')).toBeInTheDocument();
     expect(screen.getByText('Standings')).toBeInTheDocument();
   });
 
@@ -265,6 +271,55 @@ describe('LeagueViewPage', () => {
     renderWithRouter();
 
     expect(screen.queryByLabelText(/Home score prediction/)).not.toBeInTheDocument();
+  });
+
+  it('shows leaderboard table in leaderboard tab', () => {
+    mockedUseLeaderboard.mockReturnValue({
+      data: [
+        {
+          userId: 'u1',
+          displayName: 'Alice',
+          pictureUrl: null,
+          rank: 1,
+          totalPoints: 7,
+          correctScores: 2,
+          correctOutcomes: 1,
+          wrongPredictions: 0,
+          topScorerPoints: null,
+          leagueWinnerPoints: null,
+        },
+        {
+          userId: 'u2',
+          displayName: 'Bob',
+          pictureUrl: null,
+          rank: 2,
+          totalPoints: 3,
+          correctScores: 1,
+          correctOutcomes: 0,
+          wrongPredictions: 1,
+          topScorerPoints: null,
+          leagueWinnerPoints: null,
+        },
+      ],
+      isLoading: false,
+    } as ReturnType<typeof useLeaderboard>);
+
+    renderWithRouter();
+
+    fireEvent.click(screen.getByText('Leaderboard'));
+
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Bob')).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('shows empty leaderboard message when no data', () => {
+    renderWithRouter();
+
+    fireEvent.click(screen.getByText('Leaderboard'));
+
+    expect(screen.getByText('No leaderboard data yet. Points will appear once matches are scored.')).toBeInTheDocument();
   });
 
   it('shows my predictions table in predictions tab', () => {

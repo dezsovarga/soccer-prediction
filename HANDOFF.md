@@ -68,12 +68,36 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 - `hooks/use-admin-teams.ts`, `hooks/use-admin-fixtures.ts` — TanStack Query mutations with cache invalidation
 - `types.ts` + `api.ts` — all new types and 9 new API functions
 
+### Milestone 5 — Leaderboard & Admin Backoffice ✅
+
+**Backend (new/modified):**
+- `leaderboard/` package — `LeaderboardDto.kt`, `LeaderboardService.kt`, `LeaderboardController.kt`
+  - `GET /api/leagues/{id}/leaderboard` — computes rankings at query time by summing `points_earned` across Prediction, TopScorerPick, LeagueWinnerPick per user per league
+  - Ranking: total points → correct scores → correct outcomes → name (alphabetical tiebreak)
+- `user/AdminUserController.kt` + `UserService.kt` — admin user management
+  - `GET /api/admin/users` — list all users with createdAt
+  - `PATCH /api/admin/users/{id}` — toggle is_active status
+- `user/UserDto.kt` — added `AdminUserDto` (includes `createdAt`) + `UpdateUserRequest`
+- Repository additions: `PredictionRepository.findByFixtureLeagueId`, `TopScorerPickRepository.findByLeagueId`, `LeagueWinnerPickRepository.findByLeagueId`, `LeagueMemberRepository.findByLeagueId`
+
+**Frontend (new/modified):**
+- `league-view.tsx` — new Leaderboard tab with ranked table (rank, player, exact scores, correct outcomes, bonus picks, total points)
+- `admin-users.tsx` — full user management page with activate/deactivate toggle (disabled for admin users)
+- `admin-leagues.tsx` — Edit button on each league → inline form to edit scoring settings (exact score pts, correct outcome pts, wrong prediction pts, top scorer bonus, winner bonus)
+- `hooks/use-admin-users.ts` — `useAdminUsers()`, `useUpdateUser()`
+- `hooks/use-admin-leagues.ts` — added `useUpdateLeague()`
+- `hooks/use-leagues.ts` — added `useLeaderboard()`
+- `types.ts` — added `LeaderboardEntryDto`, `AdminUserDto`, `UpdateUserRequest`, `UpdateLeagueRequest`
+- `api.ts` — added `fetchLeaderboard`, `fetchAdminUsers`, `updateUser`, `updateLeagueSettings`
+- `App.tsx` — replaced placeholder admin users route with `AdminUsersPage`
+- `openapi.yaml` — version 0.5.0, added leaderboard endpoint, admin user endpoints, and all M5 schemas
+
 ---
 
 ## Current Test Counts
 
-- **Backend**: 89 tests passing (`cd backend && ./mvnw test`)
-- **Frontend**: 42 tests passing (`cd frontend && npm test -- --run`)
+- **Backend**: 107 tests passing (`cd backend && ./mvnw test`)
+- **Frontend**: 51 tests passing (`cd frontend && npm test -- --run`)
 
 ---
 
@@ -114,16 +138,6 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 ---
 
 ## Where to Pick Up Next
-
-### Milestone 5 — Leaderboard & Admin Backoffice
-
-From `spec.md`:
-- **Leaderboard**: ranked list per league showing total points, correct scores, correct outcomes. Computed at query time by summing `points_earned` across Prediction + TopScorerPick + LeagueWinnerPick per user per league.
-- **Admin user management**: view registered users, toggle active/deactivate.
-- **Admin league editing**: edit point system, view member counts.
-- **Responsive mobile design** polish across all pages.
-
-The leaderboard endpoint (`GET /api/leagues/{id}/leaderboard`) and admin user endpoints (`GET /api/admin/users`, `PATCH /api/admin/users/{id}`) are defined in `spec.md` but not yet implemented.
 
 ### Milestone 6 — Polish & Deploy
 - Loading states, error handling, empty states

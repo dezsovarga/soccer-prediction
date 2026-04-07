@@ -10,6 +10,7 @@ import { LeagueViewPage } from '@/pages/league-view';
 import { AdminLeaguesPage } from '@/pages/admin-leagues';
 import { AdminTeamsPage } from '@/pages/admin-teams';
 import { AdminFixturesPage } from '@/pages/admin-fixtures';
+import { AdminUsersPage } from '@/pages/admin-users';
 import { NotFoundPage } from '@/pages/not-found';
 
 export default function App() {
@@ -29,7 +30,7 @@ export default function App() {
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<div>Admin Dashboard</div>} />
-            <Route path="/admin/users" element={<div>User Management</div>} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/leagues" element={<AdminLeaguesPage />} />
             <Route path="/admin/leagues/:id/teams" element={<AdminTeamsPage />} />
             <Route path="/admin/leagues/:id/fixtures" element={<AdminFixturesPage />} />

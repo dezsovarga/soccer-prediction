@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminLeaguesPage } from './admin-leagues';
 
 vi.mock('@/hooks/use-admin-leagues');
 
-import { useAdminLeagues, useSearchApiFootballLeagues, useCreateLeague } from '@/hooks/use-admin-leagues';
+import { useAdminLeagues, useSearchApiFootballLeagues, useCreateLeague, useUpdateLeague } from '@/hooks/use-admin-leagues';
 
 const mockedUseAdminLeagues = vi.mocked(useAdminLeagues);
 const mockedUseSearchApiFootballLeagues = vi.mocked(useSearchApiFootballLeagues);
 const mockedUseCreateLeague = vi.mocked(useCreateLeague);
+const mockedUseUpdateLeague = vi.mocked(useUpdateLeague);
 
 function renderWithRouter() {
   return render(
@@ -30,6 +31,10 @@ describe('AdminLeaguesPage', () => {
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof useCreateLeague>);
+    mockedUseUpdateLeague.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useUpdateLeague>);
   });
 
   it('shows page title and manual creation form by default', () => {
@@ -100,6 +105,39 @@ describe('AdminLeaguesPage', () => {
 
     expect(screen.getByText('Teams')).toBeInTheDocument();
     expect(screen.getByText('Fixtures')).toBeInTheDocument();
+  });
+
+  it('shows Edit button that opens edit form', () => {
+    mockedUseAdminLeagues.mockReturnValue({
+      data: [
+        {
+          id: 'l1',
+          name: 'World Cup 2026',
+          mode: 'MANUAL',
+          apiLeagueId: null,
+          season: 2026,
+          joinCode: 'WC2026',
+          exactScorePoints: 3,
+          correctOutcomePoints: 1,
+          wrongPredictionPoints: 0,
+          topScorerBonus: 10,
+          leagueWinnerBonus: 10,
+          memberCount: 5,
+          createdAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      isLoading: false,
+    } as ReturnType<typeof useAdminLeagues>);
+
+    renderWithRouter();
+
+    fireEvent.click(screen.getByText('Edit'));
+
+    expect(screen.getByText('Edit League: World Cup 2026')).toBeInTheDocument();
+    expect(screen.getByLabelText('Exact Score Pts')).toHaveValue(3);
+    expect(screen.getByLabelText('Correct Outcome Pts')).toHaveValue(1);
+    expect(screen.getByText('Save Changes')).toBeInTheDocument();
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
   });
 
   it('shows empty state when no leagues exist', () => {

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchMyLeagues, fetchLeague, fetchFixtures, fetchStandings, joinLeague } from '@/lib/api';
+import { fetchMyLeagues, fetchLeague, fetchFixtures, fetchStandings, joinLeague, fetchLeaderboard } from '@/lib/api';
 
 export function useMyLeagues() {
   return useQuery({
@@ -28,6 +28,14 @@ export function useStandings(leagueId: string) {
   return useQuery({
     queryKey: ['leagues', leagueId, 'standings'],
     queryFn: () => fetchStandings(leagueId),
+    enabled: !!leagueId,
+  });
+}
+
+export function useLeaderboard(leagueId: string) {
+  return useQuery({
+    queryKey: ['leagues', leagueId, 'leaderboard'],
+    queryFn: () => fetchLeaderboard(leagueId),
     enabled: !!leagueId,
   });
 }

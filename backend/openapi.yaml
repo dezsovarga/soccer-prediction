@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Soccer Prediction API
-  version: 0.4.0
+  version: 0.5.0
   description: API for the soccer prediction web application.
 
 servers:
@@ -331,6 +331,80 @@ paths:
         '401':
           description: Not authenticated
 
+  /api/leagues/{id}/leaderboard:
+    get:
+      summary: Get prediction leaderboard for a league
+      tags: [Leagues]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Leaderboard entries ranked by total points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntryDto'
+        '404':
+          description: League not found
+        '401':
+          description: Not authenticated
+
+  /api/admin/users:
+    get:
+      summary: List all users (admin)
+      tags: [Admin]
+      responses:
+        '200':
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminUserDto'
+        '403':
+          description: Not an admin
+        '401':
+          description: Not authenticated
+
+  /api/admin/users/{id}:
+    patch:
+      summary: Update user status (admin)
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserDto'
+        '404':
+          description: User not found
+        '403':
+          description: Not an admin
+        '401':
+          description: Not authenticated
+
   /api/admin/leagues:
     get:
       summary: List all leagues (admin)
@@ -646,6 +720,64 @@ components:
           enum: [USER, ADMIN]
         isActive:
           type: boolean
+
+    AdminUserDto:
+      type: object
+      required: [id, email, displayName, role, isActive, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        displayName:
+          type: string
+        pictureUrl:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+
+    LeaderboardEntryDto:
+      type: object
+      required: [userId, displayName, rank, totalPoints, correctScores, correctOutcomes, wrongPredictions]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        pictureUrl:
+          type: string
+          nullable: true
+        rank:
+          type: integer
+        totalPoints:
+          type: integer
+        correctScores:
+          type: integer
+        correctOutcomes:
+          type: integer
+        wrongPredictions:
+          type: integer
+        topScorerPoints:
+          type: integer
+          nullable: true
+        leagueWinnerPoints:
+          type: integer
+          nullable: true
 
     ErrorResponse:
       type: object

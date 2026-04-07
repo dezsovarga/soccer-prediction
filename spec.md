@@ -278,7 +278,7 @@ per user per league. No separate leaderboard table is needed.
 - Group standings computed from fixture results.
 - Refactor existing Fixture entity to reference Team entities instead of plain strings.
 
-### Milestone 5 — Leaderboard & Admin Backoffice
+### Milestone 5 — Leaderboard & Admin Backoffice ✅
 - Leaderboard: ranked list with total points, correct scores, correct outcomes.
 - Admin user management: view users, toggle active status.
 - Admin league management: edit point system, view member counts.
