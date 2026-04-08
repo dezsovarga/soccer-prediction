@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTeams, useCreateTeam, useDeleteTeam } from '@/hooks/use-admin-teams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { PageSpinner } from '@/components/spinner';
 import { ErrorAlert } from '@/components/error-alert';
 import { EmptyState } from '@/components/empty-state';
 import { useToast } from '@/components/toast';
+import { FIFA_TEAMS } from '@/lib/fifa-teams';
 
 export function AdminTeamsPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,18 @@ export function AdminTeamsPage() {
   const [name, setName] = useState('');
   const [countryCode, setCountryCode] = useState('');
   const [groupName, setGroupName] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = name.length >= 1
+    ? FIFA_TEAMS.filter((t) => t.name.toLowerCase().includes(name.toLowerCase())).slice(0, 10)
+    : [];
+
+  function selectTeam(teamName: string, teamCode: string) {
+    setName(teamName);
+    setCountryCode(teamCode);
+    setShowSuggestions(false);
+  }
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -66,27 +79,58 @@ export function AdminTeamsPage() {
         </Link>
       </div>
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Add Team</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-end gap-3">
-            <div className="flex-1 space-y-1">
+            <div className="relative flex-1 space-y-1">
               <Label htmlFor="team-name">Team Name</Label>
               <Input
+                ref={nameInputRef}
                 id="team-name"
                 placeholder="e.g. Brazil"
+                autoComplete="off"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setCountryCode('');
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  // Delay to allow click on suggestion
+                  setTimeout(() => setShowSuggestions(false), 150);
+                }}
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border bg-popover shadow-lg">
+                  {suggestions.map((team) => (
+                    <button
+                      key={team.code}
+                      type="button"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectTeam(team.name, team.code)}
+                    >
+                      <img
+                        src={`https://flagcdn.com/w40/${team.code}.png`}
+                        alt=""
+                        className="h-4 w-6 object-contain"
+                      />
+                      <span>{team.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{team.code}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="w-24 space-y-1">
               <Label htmlFor="country-code">Code</Label>
               <Input
                 id="country-code"
                 placeholder="br"
-                maxLength={2}
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
               />

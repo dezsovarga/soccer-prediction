@@ -62,8 +62,9 @@ describe('AdminTeamsPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Brazil')).toBeInTheDocument();
-    expect(screen.getByText('Germany')).toBeInTheDocument();
+    // Teams appear in the table (may also appear in autocomplete suggestions)
+    expect(screen.getAllByText('Brazil').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Germany').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Teams (2)')).toBeInTheDocument();
   });
 
@@ -84,5 +85,39 @@ describe('AdminTeamsPage', () => {
       { name: 'Brazil', countryCode: 'br', groupName: 'A' },
       expect.anything()
     );
+  });
+
+  it('shows autocomplete suggestions when typing team name', () => {
+    mockedUseTeams.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as ReturnType<typeof useTeams>);
+
+    renderPage();
+
+    const nameInput = screen.getByPlaceholderText('e.g. Brazil');
+    fireEvent.focus(nameInput);
+    fireEvent.change(nameInput, { target: { value: 'Bra' } });
+
+    expect(screen.getByText('Brazil')).toBeInTheDocument();
+  });
+
+  it('selects team from autocomplete and fills code', () => {
+    mockedUseTeams.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as ReturnType<typeof useTeams>);
+
+    renderPage();
+
+    const nameInput = screen.getByPlaceholderText('e.g. Brazil');
+    fireEvent.focus(nameInput);
+    fireEvent.change(nameInput, { target: { value: 'Ger' } });
+
+    // Click the Germany suggestion
+    fireEvent.click(screen.getByText('Germany'));
+
+    expect(nameInput).toHaveValue('Germany');
+    expect(screen.getByPlaceholderText('br')).toHaveValue('de');
   });
 });
