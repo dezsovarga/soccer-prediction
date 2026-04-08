@@ -55,6 +55,46 @@ describe('LoginPage', () => {
     );
   });
 
+  it('shows deactivated error message from URL param', () => {
+    mockedUseAuth.mockReturnValue({
+      user: undefined,
+      isLoading: false,
+      isAuthenticated: false,
+      isAdmin: false,
+      isUnauthorized: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/login?error=account_deactivated']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Your account has been deactivated. Please contact an administrator.')).toBeInTheDocument();
+  });
+
+  it('shows generic auth error message from URL param', () => {
+    mockedUseAuth.mockReturnValue({
+      user: undefined,
+      isLoading: false,
+      isAuthenticated: false,
+      isAdmin: false,
+      isUnauthorized: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/login?error=auth_failed']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Authentication failed. Please try again.')).toBeInTheDocument();
+  });
+
   it('redirects to home when already authenticated', () => {
     mockedUseAuth.mockReturnValue({
       user: { id: '1', email: 'test@example.com', displayName: 'Test', pictureUrl: null, role: 'USER', isActive: true },

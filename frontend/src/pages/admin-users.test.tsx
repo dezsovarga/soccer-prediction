@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { ToastProvider } from '@/components/toast';
 import { AdminUsersPage } from './admin-users';
 
 vi.mock('@/hooks/use-admin-users');
@@ -15,7 +16,9 @@ const mutateMock = vi.fn();
 function renderPage() {
   return render(
     <MemoryRouter>
-      <AdminUsersPage />
+      <ToastProvider>
+        <AdminUsersPage />
+      </ToastProvider>
     </MemoryRouter>
   );
 }
@@ -117,10 +120,10 @@ describe('AdminUsersPage', () => {
 
     fireEvent.click(screen.getByText('Deactivate'));
 
-    expect(mutateMock).toHaveBeenCalledWith({
-      id: 'u1',
-      request: { isActive: false },
-    });
+    expect(mutateMock).toHaveBeenCalledWith(
+      { id: 'u1', request: { isActive: false } },
+      expect.anything(),
+    );
   });
 
   it('shows Activate button for inactive users', () => {

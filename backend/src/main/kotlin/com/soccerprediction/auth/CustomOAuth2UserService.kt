@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.slf4j.LoggerFactory
@@ -34,6 +36,12 @@ class CustomOAuth2UserService(
         val user = userRepository.findByEmail(email)
         val role: UserRole
         if (user != null) {
+            if (!user.isActive) {
+                log.warn("Login blocked for deactivated user: $email")
+                throw OAuth2AuthenticationException(
+                    OAuth2Error("account_deactivated", "Your account has been deactivated.", null)
+                )
+            }
             user.displayName = name
             user.pictureUrl = picture
             userRepository.saveAndFlush(user)

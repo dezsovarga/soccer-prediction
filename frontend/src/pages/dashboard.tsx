@@ -4,10 +4,13 @@ import { useMyLeagues } from '@/hooks/use-leagues';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { data: leagues, isLoading } = useMyLeagues();
+  const { data: leagues, isLoading, error, refetch } = useMyLeagues();
 
   return (
     <div className="space-y-6">
@@ -20,19 +23,21 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Loading leagues...</p>}
+      {isLoading && <PageSpinner message="Loading leagues..." />}
 
-      {!isLoading && leagues && leagues.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">
-              You haven't joined any leagues yet.
-            </p>
-            <Link to="/join" className={buttonVariants({ variant: 'outline', className: 'mt-4' })}>
+      {error && (
+        <ErrorAlert message="Failed to load your leagues." onRetry={() => refetch()} />
+      )}
+
+      {!isLoading && !error && leagues && leagues.length === 0 && (
+        <EmptyState
+          message="You haven't joined any leagues yet."
+          action={
+            <Link to="/join" className={buttonVariants({ variant: 'outline' })}>
               Join your first league
             </Link>
-          </CardContent>
-        </Card>
+          }
+        />
       )}
 
       {leagues && leagues.length > 0 && (

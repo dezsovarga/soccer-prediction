@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { ToastProvider } from '@/components/toast';
 import { LeagueViewPage } from './league-view';
 
 vi.mock('@/hooks/use-leagues');
@@ -92,9 +93,11 @@ function setupDefaultMocks() {
 function renderWithRouter() {
   return render(
     <MemoryRouter initialEntries={['/leagues/abc-123']}>
-      <Routes>
-        <Route path="/leagues/:id" element={<LeagueViewPage />} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/leagues/:id" element={<LeagueViewPage />} />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>
   );
 }
@@ -113,7 +116,7 @@ describe('LeagueViewPage', () => {
 
     renderWithRouter();
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Loading league...')).toBeInTheDocument();
   });
 
   it('shows league name and all tabs', () => {
@@ -193,10 +196,10 @@ describe('LeagueViewPage', () => {
     fireEvent.change(awayInput, { target: { value: '1' } });
     fireEvent.click(screen.getByText('Save'));
 
-    expect(mutateMock).toHaveBeenCalledWith({
-      fixtureId: 'fix-1',
-      request: { homeScore: 2, awayScore: 1 },
-    });
+    expect(mutateMock).toHaveBeenCalledWith(
+      { fixtureId: 'fix-1', request: { homeScore: 2, awayScore: 1 } },
+      expect.anything(),
+    );
   });
 
   it('shows existing prediction for finished fixture', () => {

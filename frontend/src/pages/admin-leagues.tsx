@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
+import { useToast } from '@/components/toast';
 import type { ApiFootballLeague, LeagueDto, LeagueMode } from '@/lib/types';
 
 function EditLeagueForm({
@@ -17,6 +21,7 @@ function EditLeagueForm({
   onClose: () => void;
 }) {
   const updateMutation = useUpdateLeague();
+  const { toast } = useToast();
   const [name, setName] = useState(league.name);
   const [exactScorePoints, setExactScorePoints] = useState(league.exactScorePoints.toString());
   const [correctOutcomePoints, setCorrectOutcomePoints] = useState(league.correctOutcomePoints.toString());
@@ -37,7 +42,13 @@ function EditLeagueForm({
           leagueWinnerBonus: parseInt(leagueWinnerBonus, 10),
         },
       },
-      { onSuccess: onClose }
+      {
+        onSuccess: () => {
+          toast('success', 'League settings saved');
+          onClose();
+        },
+        onError: () => toast('error', 'Failed to save league settings'),
+      }
     );
   }
 
@@ -85,11 +96,12 @@ function EditLeagueForm({
 }
 
 export function AdminLeaguesPage() {
-  const { data: leagues, isLoading } = useAdminLeagues();
+  const { data: leagues, isLoading, error, refetch } = useAdminLeagues();
   const [mode, setMode] = useState<LeagueMode>('MANUAL');
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults, isLoading: searching } = useSearchApiFootballLeagues(searchQuery);
   const createMutation = useCreateLeague();
+  const { toast } = useToast();
   const [selectedLeague, setSelectedLeague] = useState<ApiFootballLeague | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [leagueName, setLeagueName] = useState('');
@@ -115,7 +127,9 @@ export function AdminLeaguesPage() {
         onSuccess: () => {
           setLeagueName('');
           setManualSeason(new Date().getFullYear().toString());
+          toast('success', 'League created');
         },
+        onError: () => toast('error', 'Failed to create league'),
       }
     );
   };
@@ -135,7 +149,9 @@ export function AdminLeaguesPage() {
           setSelectedSeason(null);
           setLeagueName('');
           setSearchQuery('');
+          toast('success', 'League created');
         },
+        onError: () => toast('error', 'Failed to create league'),
       }
     );
   };
@@ -288,9 +304,10 @@ export function AdminLeaguesPage() {
           <CardTitle>Existing Leagues</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {leagues && leagues.length === 0 && (
-            <p className="text-muted-foreground">No leagues created yet.</p>
+          {isLoading && <PageSpinner message="Loading leagues..." />}
+          {error && <ErrorAlert message="Failed to load leagues." onRetry={() => refetch()} />}
+          {!isLoading && !error && leagues && leagues.length === 0 && (
+            <EmptyState message="No leagues created yet." />
           )}
           {leagues && leagues.length > 0 && (
             <Table>

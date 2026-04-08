@@ -5,9 +5,11 @@ import com.soccerprediction.user.UserRepository
 import com.soccerprediction.user.UserRole
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 
 class CustomOAuth2UserServiceTest {
 
@@ -51,5 +53,26 @@ class CustomOAuth2UserServiceTest {
         assertEquals("New Name", existingUser.displayName)
         assertEquals("https://example.com/new.jpg", existingUser.pictureUrl)
         verify { userRepository.save(existingUser) }
+    }
+
+    @Test
+    fun `inactive user has isActive false`() {
+        val inactiveUser = User(
+            email = "blocked@test.com",
+            displayName = "Blocked",
+            isActive = false
+        )
+
+        assertFalse(inactiveUser.isActive)
+    }
+
+    @Test
+    fun `active user has isActive true by default`() {
+        val activeUser = User(
+            email = "active@test.com",
+            displayName = "Active"
+        )
+
+        assertTrue(activeUser.isActive)
     }
 }

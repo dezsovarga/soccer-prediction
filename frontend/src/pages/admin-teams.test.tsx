@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { ToastProvider } from '@/components/toast';
 import { AdminTeamsPage } from './admin-teams';
 
 vi.mock('@/hooks/use-admin-teams');
@@ -17,9 +18,11 @@ const deleteMock = vi.fn();
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/admin/leagues/abc-123/teams']}>
-      <Routes>
-        <Route path="/admin/leagues/:id/teams" element={<AdminTeamsPage />} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/admin/leagues/:id/teams" element={<AdminTeamsPage />} />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>
   );
 }

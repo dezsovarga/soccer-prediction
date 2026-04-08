@@ -8,14 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
+import { useToast } from '@/components/toast';
 
 export function AdminFixturesPage() {
   const { id } = useParams<{ id: string }>();
   const { data: teams } = useTeams(id!);
-  const { data: fixtures, isLoading } = useAdminFixtures(id!);
+  const { data: fixtures, isLoading, error, refetch } = useAdminFixtures(id!);
   const createFixture = useCreateFixture(id!);
   const deleteFixture = useDeleteFixture(id!);
   const enterResultMutation = useEnterResult(id!);
+  const { toast } = useToast();
 
   const [homeTeamId, setHomeTeamId] = useState('');
   const [awayTeamId, setAwayTeamId] = useState('');
@@ -44,7 +49,9 @@ export function AdminFixturesPage() {
           setAwayTeamId('');
           setKickoff('');
           setRound('');
+          toast('success', 'Fixture created');
         },
+        onError: () => toast('error', 'Failed to create fixture'),
       }
     );
   };
@@ -60,9 +67,18 @@ export function AdminFixturesPage() {
           setResultFixtureId(null);
           setHomeScore('');
           setAwayScore('');
+          toast('success', 'Result entered');
         },
+        onError: () => toast('error', 'Failed to enter result'),
       }
     );
+  };
+
+  const handleDelete = (fixtureId: string) => {
+    deleteFixture.mutate(fixtureId, {
+      onSuccess: () => toast('success', 'Fixture deleted'),
+      onError: () => toast('error', 'Failed to delete fixture'),
+    });
   };
 
   return (
@@ -158,9 +174,10 @@ export function AdminFixturesPage() {
           <CardTitle>Fixtures {fixtures ? `(${fixtures.length})` : ''}</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {fixtures && fixtures.length === 0 && (
-            <p className="text-muted-foreground">No fixtures created yet.</p>
+          {isLoading && <PageSpinner message="Loading fixtures..." />}
+          {error && <ErrorAlert message="Failed to load fixtures." onRetry={() => refetch()} />}
+          {!isLoading && !error && fixtures && fixtures.length === 0 && (
+            <EmptyState message="No fixtures created yet." />
           )}
           {fixtures && fixtures.length > 0 && (
             <Table>
@@ -258,7 +275,7 @@ export function AdminFixturesPage() {
                         <Button
                           variant="destructive"
                           size="xs"
-                          onClick={() => deleteFixture.mutate(fixture.id)}
+                          onClick={() => handleDelete(fixture.id)}
                           disabled={deleteFixture.isPending}
                         >
                           Delete

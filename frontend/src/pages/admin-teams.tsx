@@ -7,12 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
+import { useToast } from '@/components/toast';
 
 export function AdminTeamsPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: teams, isLoading } = useTeams(id!);
+  const { data: teams, isLoading, error, refetch } = useTeams(id!);
   const createTeam = useCreateTeam(id!);
   const deleteTeam = useDeleteTeam(id!);
+  const { toast } = useToast();
 
   const [name, setName] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -31,9 +36,18 @@ export function AdminTeamsPage() {
           setName('');
           setCountryCode('');
           setGroupName('');
+          toast('success', 'Team added');
         },
+        onError: () => toast('error', 'Failed to add team'),
       }
     );
+  };
+
+  const handleDelete = (teamId: string, teamName: string) => {
+    deleteTeam.mutate(teamId, {
+      onSuccess: () => toast('success', `${teamName} deleted`),
+      onError: () => toast('error', `Failed to delete ${teamName}`),
+    });
   };
 
   const groups = teams
@@ -98,9 +112,10 @@ export function AdminTeamsPage() {
           <CardTitle>Teams {teams ? `(${teams.length})` : ''}</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading && <p className="text-muted-foreground">Loading...</p>}
-          {teams && teams.length === 0 && (
-            <p className="text-muted-foreground">No teams added yet.</p>
+          {isLoading && <PageSpinner message="Loading teams..." />}
+          {error && <ErrorAlert message="Failed to load teams." onRetry={() => refetch()} />}
+          {!isLoading && !error && teams && teams.length === 0 && (
+            <EmptyState message="No teams added yet." />
           )}
           {teams && teams.length > 0 && (
             <Table>
@@ -132,7 +147,7 @@ export function AdminTeamsPage() {
                       <Button
                         variant="destructive"
                         size="xs"
-                        onClick={() => deleteTeam.mutate(team.id)}
+                        onClick={() => handleDelete(team.id, team.name)}
                         disabled={deleteTeam.isPending}
                       >
                         Delete

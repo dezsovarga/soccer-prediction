@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { ToastProvider } from '@/components/toast';
 import { AdminLeaguesPage } from './admin-leagues';
 
 vi.mock('@/hooks/use-admin-leagues');
@@ -15,7 +16,9 @@ const mockedUseUpdateLeague = vi.mocked(useUpdateLeague);
 function renderWithRouter() {
   return render(
     <MemoryRouter>
-      <AdminLeaguesPage />
+      <ToastProvider>
+        <AdminLeaguesPage />
+      </ToastProvider>
     </MemoryRouter>
   );
 }

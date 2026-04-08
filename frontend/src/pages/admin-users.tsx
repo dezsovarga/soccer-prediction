@@ -3,16 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
+import { useToast } from '@/components/toast';
 
 export function AdminUsersPage() {
-  const { data: users, isLoading } = useAdminUsers();
+  const { data: users, isLoading, error, refetch } = useAdminUsers();
   const updateMutation = useUpdateUser();
+  const { toast } = useToast();
 
   function handleToggleActive(id: string, currentlyActive: boolean) {
-    updateMutation.mutate({ id, request: { isActive: !currentlyActive } });
+    updateMutation.mutate(
+      { id, request: { isActive: !currentlyActive } },
+      {
+        onSuccess: () => toast('success', `User ${currentlyActive ? 'deactivated' : 'activated'}`),
+        onError: () => toast('error', 'Failed to update user'),
+      },
+    );
   }
 
-  if (isLoading) return <p className="text-muted-foreground">Loading users...</p>;
+  if (isLoading) return <PageSpinner message="Loading users..." />;
+  if (error) return <ErrorAlert message="Failed to load users." onRetry={() => refetch()} />;
 
   return (
     <div className="space-y-6">
@@ -26,7 +38,7 @@ export function AdminUsersPage() {
         </CardHeader>
         <CardContent>
           {users && users.length === 0 && (
-            <p className="text-muted-foreground">No users registered yet.</p>
+            <EmptyState message="No users registered yet." />
           )}
           {users && users.length > 0 && (
             <Table>

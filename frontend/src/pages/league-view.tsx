@@ -16,6 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PageSpinner } from '@/components/spinner';
+import { ErrorAlert } from '@/components/error-alert';
+import { EmptyState } from '@/components/empty-state';
+import { useToast } from '@/components/toast';
 import type { FixtureDto, PredictionDto, LeaderboardEntryDto } from '@/lib/types';
 
 function groupByMatchday(fixtures: FixtureDto[]): Map<number, FixtureDto[]> {
@@ -146,6 +150,7 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
   const { data: leagueWinnerPick } = useLeagueWinnerPick(leagueId);
   const saveTopScorer = useSaveTopScorerPick(leagueId);
   const saveLeagueWinner = useSaveLeagueWinnerPick(leagueId);
+  const { toast } = useToast();
 
   const [topScorerSearch, setTopScorerSearch] = useState('');
   const [topScorerName, setTopScorerName] = useState('');
@@ -155,6 +160,20 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
   const filteredPlayers = players?.filter(
     (p) => p.name.toLowerCase().includes(topScorerSearch.toLowerCase())
   ) ?? [];
+
+  function handleSaveTopScorer(request: { playerName: string; apiPlayerId?: number }) {
+    saveTopScorer.mutate(request, {
+      onSuccess: () => toast('success', 'Top scorer pick saved'),
+      onError: () => toast('error', 'Failed to save top scorer pick'),
+    });
+  }
+
+  function handleSaveLeagueWinner(request: { teamName: string; apiTeamId?: number }) {
+    saveLeagueWinner.mutate(request, {
+      onSuccess: () => toast('success', 'League winner pick saved'),
+      onError: () => toast('error', 'Failed to save league winner pick'),
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -186,7 +205,7 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
                 size="sm"
                 disabled={!topScorerName.trim()}
                 onClick={() => {
-                  saveTopScorer.mutate({ playerName: topScorerName.trim() });
+                  handleSaveTopScorer({ playerName: topScorerName.trim() });
                   setTopScorerName('');
                 }}
               >
@@ -209,7 +228,7 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
                       key={player.apiPlayerId}
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
                       onClick={() => {
-                        saveTopScorer.mutate({
+                        handleSaveTopScorer({
                           playerName: player.name,
                           apiPlayerId: player.apiPlayerId,
                         });
@@ -256,7 +275,7 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
                   key={team.id}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
                   onClick={() => {
-                    saveLeagueWinner.mutate({
+                    handleSaveLeagueWinner({
                       teamName: team.teamName,
                       apiTeamId: team.apiTeamId ?? undefined,
                     });
@@ -283,7 +302,7 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
   );
 
   if (sorted.length === 0) {
-    return <p className="text-muted-foreground">No predictions yet. Go to Fixtures to make your predictions.</p>;
+    return <EmptyState message="No predictions yet. Go to Fixtures to make your predictions." />;
   }
 
   return (
@@ -324,10 +343,16 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
   );
 }
 
-function LeaderboardTable({ entries, isLoading }: { entries: LeaderboardEntryDto[] | undefined; isLoading: boolean }) {
-  if (isLoading) return <p className="text-muted-foreground">Loading leaderboard...</p>;
+function LeaderboardTable({ entries, isLoading, error, onRetry }: {
+  entries: LeaderboardEntryDto[] | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  onRetry: () => void;
+}) {
+  if (isLoading) return <PageSpinner message="Loading leaderboard..." />;
+  if (error) return <ErrorAlert message="Failed to load leaderboard." onRetry={onRetry} />;
   if (!entries || entries.length === 0) {
-    return <p className="text-muted-foreground">No leaderboard data yet. Points will appear once matches are scored.</p>;
+    return <EmptyState message="No leaderboard data yet. Points will appear once matches are scored." />;
   }
 
   return (
@@ -373,21 +398,29 @@ function LeaderboardTable({ entries, isLoading }: { entries: LeaderboardEntryDto
 
 export function LeagueViewPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: league, isLoading: leagueLoading } = useLeague(id!);
-  const { data: fixtures, isLoading: fixturesLoading } = useFixtures(id!);
-  const { data: standings, isLoading: standingsLoading } = useStandings(id!);
+  const { data: league, isLoading: leagueLoading, error: leagueError, refetch: refetchLeague } = useLeague(id!);
+  const { data: fixtures, isLoading: fixturesLoading, error: fixturesError, refetch: refetchFixtures } = useFixtures(id!);
+  const { data: standings, isLoading: standingsLoading, error: standingsError, refetch: refetchStandings } = useStandings(id!);
   const { data: predictions } = useMyPredictions(id!);
-  const { data: leaderboard, isLoading: leaderboardLoading } = useLeaderboard(id!);
+  const { data: leaderboard, isLoading: leaderboardLoading, error: leaderboardError, refetch: refetchLeaderboard } = useLeaderboard(id!);
   const savePrediction = useSavePrediction(id!);
+  const { toast } = useToast();
 
-  if (leagueLoading) return <p className="text-muted-foreground">Loading...</p>;
-  if (!league) return <p>League not found.</p>;
+  if (leagueLoading) return <PageSpinner message="Loading league..." />;
+  if (leagueError) return <ErrorAlert message="Failed to load league." onRetry={() => refetchLeague()} />;
+  if (!league) return <ErrorAlert message="League not found." />;
 
   const matchdays = fixtures ? groupByMatchday(fixtures) : new Map();
   const predictionsByFixture = new Map(predictions?.map((p) => [p.fixtureId, p]));
 
   function handleSavePrediction(fixtureId: string, homeScore: number, awayScore: number) {
-    savePrediction.mutate({ fixtureId, request: { homeScore, awayScore } });
+    savePrediction.mutate(
+      { fixtureId, request: { homeScore, awayScore } },
+      {
+        onSuccess: () => toast('success', 'Prediction saved'),
+        onError: () => toast('error', 'Failed to save prediction'),
+      },
+    );
   }
 
   return (
@@ -410,9 +443,10 @@ export function LeagueViewPage() {
         </TabsList>
 
         <TabsContent value="fixtures" className="space-y-4">
-          {fixturesLoading && <p className="text-muted-foreground">Loading fixtures...</p>}
-          {fixtures && fixtures.length === 0 && (
-            <p className="text-muted-foreground">No fixtures yet. Data will appear after sync.</p>
+          {fixturesLoading && <PageSpinner message="Loading fixtures..." />}
+          {fixturesError && <ErrorAlert message="Failed to load fixtures." onRetry={() => refetchFixtures()} />}
+          {!fixturesLoading && !fixturesError && fixtures && fixtures.length === 0 && (
+            <EmptyState message="No fixtures yet. Data will appear after sync." />
           )}
           {[...matchdays.entries()]
             .sort(([a], [b]) => a - b)
@@ -445,13 +479,19 @@ export function LeagueViewPage() {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <LeaderboardTable entries={leaderboard} isLoading={leaderboardLoading} />
+          <LeaderboardTable
+            entries={leaderboard}
+            isLoading={leaderboardLoading}
+            error={leaderboardError}
+            onRetry={() => refetchLeaderboard()}
+          />
         </TabsContent>
 
         <TabsContent value="standings" className="space-y-4">
-          {standingsLoading && <p className="text-muted-foreground">Loading standings...</p>}
-          {standings && standings.length === 0 && (
-            <p className="text-muted-foreground">No standings yet. Data will appear after sync.</p>
+          {standingsLoading && <PageSpinner message="Loading standings..." />}
+          {standingsError && <ErrorAlert message="Failed to load standings." onRetry={() => refetchStandings()} />}
+          {!standingsLoading && !standingsError && standings && standings.length === 0 && (
+            <EmptyState message="No standings yet. Data will appear after sync." />
           )}
           {standings && standings.length > 0 && (() => {
             const groups = new Map<string, typeof standings>();

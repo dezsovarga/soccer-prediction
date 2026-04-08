@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain
 import org.slf4j.LoggerFactory
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -45,7 +46,10 @@ class SecurityConfig(
                 it.successHandler(oAuth2LoginSuccessHandler)
                 it.failureHandler(AuthenticationFailureHandler { _, response, exception ->
                     log.error("OAuth2 login failed: ${exception.message}", exception)
-                    response.sendRedirect("$frontendUrl/login?error=auth_failed")
+                    val errorCode = if (exception is OAuth2AuthenticationException &&
+                        exception.error.errorCode == "account_deactivated"
+                    ) "account_deactivated" else "auth_failed"
+                    response.sendRedirect("$frontendUrl/login?error=$errorCode")
                 })
             }
             .exceptionHandling {
