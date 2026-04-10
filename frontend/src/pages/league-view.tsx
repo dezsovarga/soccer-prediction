@@ -488,7 +488,7 @@ export function LeagueViewPage() {
   if (leagueError) return <ErrorAlert message="Failed to load league." onRetry={() => refetchLeague()} />;
   if (!league) return <ErrorAlert message="League not found." />;
 
-  const matchdays = fixtures ? groupByMatchday(fixtures) : new Map();
+  const matchdays = fixtures ? groupByMatchday(fixtures) : new Map<number, FixtureDto[]>();
   const predictionsByFixture = new Map(predictions?.map((p) => [p.fixtureId, p]));
 
   function handleSavePrediction(fixtureId: string, homeScore: number, awayScore: number) {
