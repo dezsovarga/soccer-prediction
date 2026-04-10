@@ -323,7 +323,11 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
         {sorted.map((p) => (
           <div key={p.id} className="rounded-lg border p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</span>
+              <span className="text-sm font-medium flex items-center gap-1">
+                {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                {p.fixtureHomeTeam} vs {p.fixtureAwayTeam}
+                {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+              </span>
               <span className="text-xs text-muted-foreground">MD {p.matchday}</span>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
@@ -369,7 +373,13 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
             {sorted.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>{p.matchday}</TableCell>
-                <TableCell>{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</TableCell>
+                <TableCell>
+                  <span className="flex items-center gap-1">
+                    {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                    {p.fixtureHomeTeam} vs {p.fixtureAwayTeam}
+                    {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                  </span>
+                </TableCell>
                 <TableCell className="text-center">
                   {p.fixtureHomeScore !== null && p.fixtureAwayScore !== null
                     ? `${p.fixtureHomeScore} - ${p.fixtureAwayScore}`

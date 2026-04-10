@@ -10,6 +10,8 @@ data class PredictionDto(
     val pointsEarned: Int?,
     val fixtureHomeTeam: String,
     val fixtureAwayTeam: String,
+    val fixtureHomeTeamLogo: String?,
+    val fixtureAwayTeamLogo: String?,
     val fixtureHomeScore: Int?,
     val fixtureAwayScore: Int?,
     val fixtureKickoff: String,

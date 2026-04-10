@@ -1075,6 +1075,12 @@ components:
           type: string
         fixtureAwayTeam:
           type: string
+        fixtureHomeTeamLogo:
+          type: string
+          nullable: true
+        fixtureAwayTeamLogo:
+          type: string
+          nullable: true
         fixtureHomeScore:
           type: integer
           nullable: true

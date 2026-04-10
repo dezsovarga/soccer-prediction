@@ -143,6 +143,8 @@ export interface PredictionDto {
   pointsEarned: number | null;
   fixtureHomeTeam: string;
   fixtureAwayTeam: string;
+  fixtureHomeTeamLogo: string | null;
+  fixtureAwayTeamLogo: string | null;
   fixtureHomeScore: number | null;
   fixtureAwayScore: number | null;
   fixtureKickoff: string;
