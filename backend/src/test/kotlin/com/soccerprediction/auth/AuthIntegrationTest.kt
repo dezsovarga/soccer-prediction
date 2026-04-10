@@ -1,5 +1,6 @@
 package com.soccerprediction.auth
 
+import com.soccerprediction.league.LeagueMemberRepository
 import com.soccerprediction.user.User
 import com.soccerprediction.user.UserRepository
 import com.soccerprediction.user.UserRole
@@ -23,10 +24,14 @@ class AuthIntegrationTest {
     private lateinit var mockMvc: MockMvc
 
     @Autowired
+    private lateinit var leagueMemberRepository: LeagueMemberRepository
+
+    @Autowired
     private lateinit var userRepository: UserRepository
 
     @BeforeEach
     fun setup() {
+        leagueMemberRepository.deleteAll()
         userRepository.deleteAll()
     }
 
