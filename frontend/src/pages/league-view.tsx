@@ -81,7 +81,7 @@ function FixtureCard({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         {/* Home team */}
         <div className="flex items-center gap-1.5">
-          {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-5 w-5 shrink-0" />}
+          {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-5 w-7 shrink-0 object-contain" />}
           <span className="font-medium text-sm">{fixture.homeTeam}</span>
         </div>
 
@@ -97,7 +97,7 @@ function FixtureCard({
         {/* Away team */}
         <div className="flex items-center justify-end gap-1.5">
           <span className="font-medium text-sm text-right">{fixture.awayTeam}</span>
-          {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-5 w-5 shrink-0" />}
+          {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-5 w-7 shrink-0 object-contain" />}
         </div>
       </div>
 
@@ -292,7 +292,7 @@ function PicksSection({ leagueId, leagueMode }: { leagueId: string; leagueMode: 
                     });
                   }}
                 >
-                  {team.teamLogo && <img src={team.teamLogo} alt="" className="h-5 w-5" />}
+                  {team.teamLogo && <img src={team.teamLogo} alt="" className="h-5 w-7 shrink-0 object-contain" />}
                   <span>{team.teamName}</span>
                 </button>
               ))}
@@ -324,9 +324,9 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
           <div key={p.id} className="rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium flex items-center gap-1">
-                {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-6 shrink-0 object-contain" />}
                 {p.fixtureHomeTeam} vs {p.fixtureAwayTeam}
-                {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-6 shrink-0 object-contain" />}
               </span>
               <span className="text-xs text-muted-foreground">MD {p.matchday}</span>
             </div>
@@ -375,9 +375,9 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
                 <TableCell>{p.matchday}</TableCell>
                 <TableCell>
                   <span className="flex items-center gap-1">
-                    {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                    {p.fixtureHomeTeamLogo && <img src={p.fixtureHomeTeamLogo} alt="" className="h-4 w-6 shrink-0 object-contain" />}
                     {p.fixtureHomeTeam} vs {p.fixtureAwayTeam}
-                    {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-4 shrink-0" />}
+                    {p.fixtureAwayTeamLogo && <img src={p.fixtureAwayTeamLogo} alt="" className="h-4 w-6 shrink-0 object-contain" />}
                   </span>
                 </TableCell>
                 <TableCell className="text-center">
@@ -635,7 +635,7 @@ export function LeagueViewPage() {
                           <TableCell>{s.rank}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2 overflow-hidden">
-                              {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-5 shrink-0" />}
+                              {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-7 shrink-0 object-contain" />}
                               <span className="truncate" title={s.teamName}>{s.teamName}</span>
                             </div>
                           </TableCell>

@@ -94,10 +94,39 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 
 ---
 
+### CI/CD Pipeline & Test Fixes ✅
+
+**GitHub Actions CI pipeline (`.github/workflows/ci.yml`):**
+- Triggers on push to `main` and PRs targeting `main`
+- Two parallel jobs: Backend (Java 17, Maven, H2 in-memory tests) and Frontend (Node 22, lint, build, test)
+- Maven and npm dependency caching for speed
+- Concurrency: cancels in-progress runs on newer pushes to same branch/PR
+
+**Test fixes for CI:**
+- `AuthIntegrationTest` — fixed `@BeforeEach` cleanup to delete all tables in FK order (matching pattern of all other integration tests), preventing constraint violations from shared H2 context
+- `eslint.config.js` — added `allowConstantExport: true` to `react-refresh/only-export-components` rule for shadcn/ui `cva` variant exports
+- `tsconfig.app.json` — excluded `*.test.ts(x)` and `src/test/` from production `tsc` build (Vitest type-checks tests separately)
+- `vite.config.ts` — added `/// <reference types="vitest/config" />` so TypeScript recognizes the `test` property
+- `league-view.tsx` — typed fallback `new Map<number, FixtureDto[]>()` to fix implicit `any`
+- **Frontend test updates** (all 5 test files): updated stale assertions after mobile optimization redesign — "Sign in with Google" → "Continue with Google", `getByText` → `getAllByText` for mobile/desktop duplicated elements, "My Predictions" tab → "Predictions"
+
+### Prediction Team Logos ✅
+
+- Added `fixtureHomeTeamLogo` and `fixtureAwayTeamLogo` to `PredictionDto` end-to-end: backend DTO, mapper, OpenAPI spec, frontend type, and both mobile/desktop predictions views
+- Team flag images now rendered with rectangular aspect ratio (`object-contain`) consistently across fixtures, predictions, picks, and standings views
+
+### Sample League Data
+
+- Created "World Cup 2026" manual league (join code: `WC2026GRP`) with 4 groups (A-D), 16 teams, and 24 round-robin fixtures via direct SQL insert
+- Groups: A (Brazil, Germany, Japan, Morocco), B (Argentina, France, South Korea, Nigeria), C (Spain, England, Mexico, Australia), D (Italy, Netherlands, USA, Senegal)
+- 3 matchdays (June 14-25, 2026), 2 games per group per matchday
+
+---
+
 ## Current Test Counts
 
-- **Backend**: 107 tests passing (`cd backend && ./mvnw test`)
-- **Frontend**: 51 tests passing (`cd frontend && npm test -- --run`)
+- **Backend**: 112 tests passing (`cd backend && ./mvnw test`)
+- **Frontend**: 78 tests passing (`cd frontend && npm test -- --run`)
 
 ---
 
@@ -173,7 +202,8 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 ## Where to Pick Up Next
 
 ### Milestone 6 (remaining) — Deploy
-- Dockerfiles, AWS deployment (ECS/Fargate, S3+CloudFront, RDS)
+- Dockerfiles for backend/frontend, cloud deployment (e.g. AWS ECS/Fargate, S3+CloudFront, RDS)
+- CI pipeline is already in place (GitHub Actions)
 
 ### Milestone 7 — API-Football Sync (Optional)
 - Only needed if using paid API-Football plans

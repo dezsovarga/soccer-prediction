@@ -21,13 +21,23 @@ Web application with a React frontend and Kotlin Spring Boot backend, using Post
 
 - **Node 22** — managed via nvm (`nvm use` reads `.nvmrc`)
 - **Java 17+** — required by Spring Boot / Maven
-- **PostgreSQL** — running locally on port 5432
+- **Docker** — PostgreSQL runs in a Docker container (see `docker-compose.yml`)
 - **Google OAuth credentials** — create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials), set authorized redirect URI to `http://localhost:8080/api/auth/callback`
 
 ### Database
 
+PostgreSQL runs via Docker Compose, not locally. The `dev.sh` script starts it automatically. To start it manually:
+
 ```bash
-createdb soccer_prediction
+docker compose up -d --wait
+```
+
+This creates a `soccer_prediction` database on `localhost:5432` (user: `postgres`, password: `postgres`).
+
+To connect via psql inside the container:
+
+```bash
+docker exec -it soccer-prediction-db psql -U postgres -d soccer_prediction
 ```
 
 ### Environment Variables
