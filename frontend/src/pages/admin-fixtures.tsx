@@ -83,7 +83,7 @@ export function AdminFixturesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Link to="/admin/leagues" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
           &larr; Leagues
         </Link>
@@ -103,8 +103,8 @@ export function AdminFixturesPage() {
           )}
           {teams && teams.length >= 2 && (
             <div className="space-y-3">
-              <div className="flex items-end gap-3">
-                <div className="flex-1 space-y-1">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
                   <Label>Home Team</Label>
                   <select
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm"
@@ -117,7 +117,7 @@ export function AdminFixturesPage() {
                     ))}
                   </select>
                 </div>
-                <div className="flex-1 space-y-1">
+                <div className="space-y-1">
                   <Label>Away Team</Label>
                   <select
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm"
@@ -131,7 +131,7 @@ export function AdminFixturesPage() {
                   </select>
                 </div>
               </div>
-              <div className="flex items-end gap-3">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end">
                 <div className="flex-1 space-y-1">
                   <Label>Kickoff</Label>
                   <Input
@@ -140,29 +140,31 @@ export function AdminFixturesPage() {
                     onChange={(e) => setKickoff(e.target.value)}
                   />
                 </div>
-                <div className="w-32 space-y-1">
-                  <Label>Round</Label>
-                  <Input
-                    placeholder="Group A"
-                    value={round}
-                    onChange={(e) => setRound(e.target.value)}
-                  />
+                <div className="flex items-end gap-3">
+                  <div className="w-32 space-y-1">
+                    <Label>Round</Label>
+                    <Input
+                      placeholder="Group A"
+                      value={round}
+                      onChange={(e) => setRound(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label>Matchday</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={matchday}
+                      onChange={(e) => setMatchday(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleCreate}
+                    disabled={createFixture.isPending || !homeTeamId || !awayTeamId || !kickoff}
+                  >
+                    {createFixture.isPending ? 'Creating...' : 'Create'}
+                  </Button>
                 </div>
-                <div className="w-24 space-y-1">
-                  <Label>Matchday</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={matchday}
-                    onChange={(e) => setMatchday(e.target.value)}
-                  />
-                </div>
-                <Button
-                  onClick={handleCreate}
-                  disabled={createFixture.isPending || !homeTeamId || !awayTeamId || !kickoff}
-                >
-                  {createFixture.isPending ? 'Creating...' : 'Create'}
-                </Button>
               </div>
             </div>
           )}
@@ -180,21 +182,12 @@ export function AdminFixturesPage() {
             <EmptyState message="No fixtures created yet." />
           )}
           {fixtures && fixtures.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Match</TableHead>
-                  <TableHead>Kickoff</TableHead>
-                  <TableHead>Round</TableHead>
-                  <TableHead className="text-center">Score</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile card list */}
+              <div className="space-y-3 md:hidden">
                 {fixtures.map((fixture) => (
-                  <TableRow key={fixture.id}>
-                    <TableCell>
+                  <div key={fixture.id} className="rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-4 w-6 object-contain" />}
                         <span className="font-medium">{fixture.homeTeam}</span>
@@ -202,90 +195,191 @@ export function AdminFixturesPage() {
                         <span className="font-medium">{fixture.awayTeam}</span>
                         {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-4 w-6 object-contain" />}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {new Date(fixture.kickoff).toLocaleDateString(undefined, {
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                      })}
-                    </TableCell>
-                    <TableCell>{fixture.round && <Badge variant="outline">{fixture.round}</Badge>}</TableCell>
-                    <TableCell className="text-center">
                       {fixture.homeScore !== null && fixture.awayScore !== null
                         ? <span className="font-bold">{fixture.homeScore} - {fixture.awayScore}</span>
-                        : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={fixture.status === 'FINISHED' ? 'secondary' : 'outline'}>
-                        {fixture.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                        : <Badge variant={fixture.status === 'FINISHED' ? 'secondary' : 'outline'}>{fixture.status}</Badge>}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {new Date(fixture.kickoff).toLocaleDateString(undefined, {
+                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                      {fixture.round && <Badge variant="outline" className="text-xs">{fixture.round}</Badge>}
+                    </div>
+                    {resultFixtureId === fixture.id ? (
+                      <div className="mt-2 flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          className="w-14 text-center"
+                          placeholder="H"
+                          value={homeScore}
+                          onChange={(e) => setHomeScore(e.target.value)}
+                        />
+                        <span>-</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          className="w-14 text-center"
+                          placeholder="A"
+                          value={awayScore}
+                          onChange={(e) => setAwayScore(e.target.value)}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleEnterResult(fixture.id)}
+                          disabled={enterResultMutation.isPending}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setResultFixtureId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex gap-2">
                         {fixture.status !== 'FINISHED' && (
-                          <>
-                            {resultFixtureId === fixture.id ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  className="w-12 text-center"
-                                  placeholder="H"
-                                  value={homeScore}
-                                  onChange={(e) => setHomeScore(e.target.value)}
-                                />
-                                <span>-</span>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  className="w-12 text-center"
-                                  placeholder="A"
-                                  value={awayScore}
-                                  onChange={(e) => setAwayScore(e.target.value)}
-                                />
-                                <Button
-                                  size="xs"
-                                  onClick={() => handleEnterResult(fixture.id)}
-                                  disabled={enterResultMutation.isPending}
-                                >
-                                  Save
-                                </Button>
-                                <Button
-                                  size="xs"
-                                  variant="ghost"
-                                  onClick={() => setResultFixtureId(null)}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="xs"
-                                onClick={() => {
-                                  setResultFixtureId(fixture.id);
-                                  setHomeScore('');
-                                  setAwayScore('');
-                                }}
-                              >
-                                Enter Result
-                              </Button>
-                            )}
-                          </>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setResultFixtureId(fixture.id);
+                              setHomeScore('');
+                              setAwayScore('');
+                            }}
+                          >
+                            Enter Result
+                          </Button>
                         )}
                         <Button
                           variant="destructive"
-                          size="xs"
+                          size="sm"
                           onClick={() => handleDelete(fixture.id)}
                           disabled={deleteFixture.isPending}
                         >
                           Delete
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    )}
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Match</TableHead>
+                      <TableHead>Kickoff</TableHead>
+                      <TableHead>Round</TableHead>
+                      <TableHead className="text-center">Score</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fixtures.map((fixture) => (
+                      <TableRow key={fixture.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-4 w-6 object-contain" />}
+                            <span className="font-medium">{fixture.homeTeam}</span>
+                            <span className="text-muted-foreground">vs</span>
+                            <span className="font-medium">{fixture.awayTeam}</span>
+                            {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-4 w-6 object-contain" />}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(fixture.kickoff).toLocaleDateString(undefined, {
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                          })}
+                        </TableCell>
+                        <TableCell>{fixture.round && <Badge variant="outline">{fixture.round}</Badge>}</TableCell>
+                        <TableCell className="text-center">
+                          {fixture.homeScore !== null && fixture.awayScore !== null
+                            ? <span className="font-bold">{fixture.homeScore} - {fixture.awayScore}</span>
+                            : <span className="text-muted-foreground">-</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={fixture.status === 'FINISHED' ? 'secondary' : 'outline'}>
+                            {fixture.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {fixture.status !== 'FINISHED' && (
+                              <>
+                                {resultFixtureId === fixture.id ? (
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      className="w-12 text-center"
+                                      placeholder="H"
+                                      value={homeScore}
+                                      onChange={(e) => setHomeScore(e.target.value)}
+                                    />
+                                    <span>-</span>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      className="w-12 text-center"
+                                      placeholder="A"
+                                      value={awayScore}
+                                      onChange={(e) => setAwayScore(e.target.value)}
+                                    />
+                                    <Button
+                                      size="xs"
+                                      onClick={() => handleEnterResult(fixture.id)}
+                                      disabled={enterResultMutation.isPending}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      variant="ghost"
+                                      onClick={() => setResultFixtureId(null)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    onClick={() => {
+                                      setResultFixtureId(fixture.id);
+                                      setHomeScore('');
+                                      setAwayScore('');
+                                    }}
+                                  >
+                                    Enter Result
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              onClick={() => handleDelete(fixture.id)}
+                              disabled={deleteFixture.isPending}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

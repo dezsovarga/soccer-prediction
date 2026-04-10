@@ -2,6 +2,7 @@ package com.soccerprediction.team
 
 import com.soccerprediction.league.LeagueMode
 import com.soccerprediction.league.LeagueRepository
+import com.soccerprediction.standing.StandingComputeService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -9,7 +10,8 @@ import java.util.UUID
 @Service
 class TeamService(
     private val teamRepository: TeamRepository,
-    private val leagueRepository: LeagueRepository
+    private val leagueRepository: LeagueRepository,
+    private val standingComputeService: StandingComputeService
 ) {
     fun getTeams(leagueId: UUID): List<Team> {
         return teamRepository.findByLeagueIdOrderByGroupNameAscNameAsc(leagueId)
@@ -23,7 +25,7 @@ class TeamService(
 
         val logoUrl = request.countryCode?.let { "https://flagcdn.com/w80/${it.lowercase()}.png" }
 
-        return teamRepository.save(
+        val team = teamRepository.save(
             Team(
                 league = league,
                 name = request.name,
@@ -32,6 +34,8 @@ class TeamService(
                 groupName = request.groupName
             )
         )
+        standingComputeService.recomputeStandings(leagueId)
+        return team
     }
 
     @Transactional
@@ -46,13 +50,17 @@ class TeamService(
         }
         request.groupName?.let { team.groupName = it }
 
-        return teamRepository.save(team)
+        val saved = teamRepository.save(team)
+        standingComputeService.recomputeStandings(team.league.id)
+        return saved
     }
 
     @Transactional
     fun deleteTeam(teamId: UUID) {
         val team = teamRepository.findById(teamId)
             .orElseThrow { IllegalArgumentException("Team not found") }
+        val leagueId = team.league.id
         teamRepository.delete(team)
+        standingComputeService.recomputeStandings(leagueId)
     }
 }

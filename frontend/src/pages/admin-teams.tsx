@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useTeams, useCreateTeam, useDeleteTeam } from '@/hooks/use-admin-teams';
+import { useTeams, useCreateTeam, useUpdateTeam, useDeleteTeam } from '@/hooks/use-admin-teams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export function AdminTeamsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: teams, isLoading, error, refetch } = useTeams(id!);
   const createTeam = useCreateTeam(id!);
+  const updateTeam = useUpdateTeam(id!);
   const deleteTeam = useDeleteTeam(id!);
   const { toast } = useToast();
 
@@ -25,6 +26,10 @@ export function AdminTeamsPage() {
   const [groupName, setGroupName] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Inline edit state
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editGroupName, setEditGroupName] = useState('');
 
   const suggestions = name.length >= 1
     ? FIFA_TEAMS.filter((t) => t.name.toLowerCase().includes(name.toLowerCase())).slice(0, 10)
@@ -63,13 +68,31 @@ export function AdminTeamsPage() {
     });
   };
 
+  const startEditing = (teamId: string, currentGroup: string | null) => {
+    setEditingTeamId(teamId);
+    setEditGroupName(currentGroup ?? '');
+  };
+
+  const handleSaveEdit = (teamId: string) => {
+    updateTeam.mutate(
+      { teamId, request: { groupName: editGroupName.trim() || undefined } },
+      {
+        onSuccess: () => {
+          setEditingTeamId(null);
+          toast('success', 'Team updated');
+        },
+        onError: () => toast('error', 'Failed to update team'),
+      }
+    );
+  };
+
   const groups = teams
     ? [...new Set(teams.map((t) => t.groupName).filter(Boolean))].sort()
     : [];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Link to="/admin/leagues" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
           &larr; Leagues
         </Link>
@@ -84,7 +107,7 @@ export function AdminTeamsPage() {
           <CardTitle>Add Team</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
             <div className="relative flex-1 space-y-1">
               <Label htmlFor="team-name">Team Name</Label>
               <Input
@@ -126,27 +149,29 @@ export function AdminTeamsPage() {
                 </div>
               )}
             </div>
-            <div className="w-24 space-y-1">
-              <Label htmlFor="country-code">Code</Label>
-              <Input
-                id="country-code"
-                placeholder="br"
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-              />
+            <div className="flex items-end gap-3">
+              <div className="w-24 space-y-1">
+                <Label htmlFor="country-code">Code</Label>
+                <Input
+                  id="country-code"
+                  placeholder="br"
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                />
+              </div>
+              <div className="w-24 space-y-1">
+                <Label htmlFor="group">Group</Label>
+                <Input
+                  id="group"
+                  placeholder="A"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleCreate} disabled={createTeam.isPending || !name.trim()}>
+                {createTeam.isPending ? 'Adding...' : 'Add'}
+              </Button>
             </div>
-            <div className="w-24 space-y-1">
-              <Label htmlFor="group">Group</Label>
-              <Input
-                id="group"
-                placeholder="A"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleCreate} disabled={createTeam.isPending || !name.trim()}>
-              {createTeam.isPending ? 'Adding...' : 'Add'}
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -162,45 +187,156 @@ export function AdminTeamsPage() {
             <EmptyState message="No teams added yet." />
           )}
           {teams && teams.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">Flag</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Group</TableHead>
-                  <TableHead className="w-20">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile card list */}
+              <div className="space-y-2 md:hidden">
                 {teams.map((team) => (
-                  <TableRow key={team.id}>
-                    <TableCell>
-                      {team.logoUrl && <img src={team.logoUrl} alt="" className="h-6 w-9 object-contain" />}
-                    </TableCell>
-                    <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>
-                      {team.countryCode && (
-                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{team.countryCode}</code>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {team.groupName && <Badge variant="outline">Group {team.groupName}</Badge>}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="xs"
-                        onClick={() => handleDelete(team.id, team.name)}
-                        disabled={deleteTeam.isPending}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <div key={team.id} className="rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {team.logoUrl && <img src={team.logoUrl} alt="" className="h-6 w-9 object-contain" />}
+                        <div>
+                          <p className="font-medium">{team.name}</p>
+                          <div className="flex items-center gap-2">
+                            {team.countryCode && (
+                              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{team.countryCode}</code>
+                            )}
+                            {editingTeamId !== team.id && team.groupName && (
+                              <span className="text-xs text-muted-foreground">Group {team.groupName}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        {editingTeamId !== team.id && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              onClick={() => startEditing(team.id, team.groupName)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              onClick={() => handleDelete(team.id, team.name)}
+                              disabled={deleteTeam.isPending}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {editingTeamId === team.id && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Label className="shrink-0 text-xs">Group</Label>
+                        <Input
+                          className="w-20"
+                          value={editGroupName}
+                          onChange={(e) => setEditGroupName(e.target.value)}
+                          placeholder="A"
+                        />
+                        <Button
+                          size="xs"
+                          onClick={() => handleSaveEdit(team.id)}
+                          disabled={updateTeam.isPending}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => setEditingTeamId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">Flag</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Group</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teams.map((team) => (
+                      <TableRow key={team.id}>
+                        <TableCell>
+                          {team.logoUrl && <img src={team.logoUrl} alt="" className="h-6 w-9 object-contain" />}
+                        </TableCell>
+                        <TableCell className="font-medium">{team.name}</TableCell>
+                        <TableCell>
+                          {team.countryCode && (
+                            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{team.countryCode}</code>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingTeamId === team.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                className="w-20"
+                                value={editGroupName}
+                                onChange={(e) => setEditGroupName(e.target.value)}
+                                placeholder="A"
+                              />
+                              <Button
+                                size="xs"
+                                onClick={() => handleSaveEdit(team.id)}
+                                disabled={updateTeam.isPending}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                onClick={() => setEditingTeamId(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            team.groupName && <Badge variant="outline">Group {team.groupName}</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {editingTeamId !== team.id && (
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                onClick={() => startEditing(team.id, team.groupName)}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              onClick={() => handleDelete(team.id, team.name)}
+                              disabled={deleteTeam.isPending}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
 
           {groups.length > 0 && (

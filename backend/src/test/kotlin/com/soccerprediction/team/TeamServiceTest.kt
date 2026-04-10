@@ -3,6 +3,7 @@ package com.soccerprediction.team
 import com.soccerprediction.league.League
 import com.soccerprediction.league.LeagueMode
 import com.soccerprediction.league.LeagueRepository
+import com.soccerprediction.standing.StandingComputeService
 import io.mockk.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -11,7 +12,8 @@ import java.util.*
 class TeamServiceTest {
     private val teamRepository = mockk<TeamRepository>()
     private val leagueRepository = mockk<LeagueRepository>()
-    private val service = TeamService(teamRepository, leagueRepository)
+    private val standingComputeService = mockk<StandingComputeService>(relaxed = true)
+    private val service = TeamService(teamRepository, leagueRepository, standingComputeService)
 
     private val manualLeague = League(
         name = "World Cup 2026",

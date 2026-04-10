@@ -135,12 +135,44 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 
 3. **Frontend tests with duplicate text**: When a team name appears in both a `<select>` option and a table cell, use `getAllByText()` instead of `getByText()`.
 
+### Milestone 6 (partial) — UI Polish & Mobile Optimization ✅
+
+**Login page redesign:**
+- Desktop: split layout — dark navy blue (`oklch(0.25 0.08 260)`) left panel with hero tagline ("Predict. Compete. Win."), feature highlights, and copyright; white right panel with login card
+- Mobile: full dark navy blue background, frosted-glass card (`bg-white/10 backdrop-blur-sm`), white text, feature list below card
+- Google button: solid white with official multi-color Google "G" icon, works on both dark/light backgrounds
+- Error messages styled in `bg-destructive/10` banner
+
+**Admin pages — mobile-responsive layout:**
+- Collapsible sidebar: hidden off-screen on mobile with hamburger menu in navbar, slides in as overlay with dark backdrop, auto-closes on navigation; opaque `bg-background` on mobile, subtle `bg-muted/40` on desktop
+- All admin tables (users, leagues, teams, fixtures) replaced with dual layout: stacked card list on mobile (`md:hidden`), original table on desktop (`hidden md:block`)
+- Admin forms (teams, fixtures) stack vertically on mobile (`flex-col md:flex-row`), fixture team selects use responsive grid (`grid-cols-1 sm:grid-cols-2`)
+- Page header links wrap with `flex-wrap`
+
+**Admin teams — inline group editing:**
+- Edit button on each team row (both desktop table and mobile cards)
+- Clicking Edit shows inline group name input with Save/Cancel
+- Uses existing `useUpdateTeam` hook — no backend changes for this feature
+
+**League view (prediction page) — mobile optimization:**
+- Fixture cards: redesigned with 3-column CSS grid (`grid-cols-[1fr_auto_1fr]`) — home team | score/time | away team; status badge on separate row; prediction input separated with border divider
+- Tabs: horizontally scrollable on mobile via `overflow-x-auto` wrapper; shortened "My Predictions" to "Predictions"
+- My Predictions tab: card list on mobile showing match + matchday, score vs prediction, points badge
+- Leaderboard tab: compact cards on mobile with rank, avatar, name, stats summary, bold total points
+- Standings tab: horizontal scroll with `min-w-[540px]`; column order prioritizes P/GD/Pts after Team; `table-fixed` with `<colgroup>` for consistent column widths across groups; team names truncate with `...` and `title` tooltip
+- Page header: `flex-wrap` and responsive title size (`text-xl md:text-2xl`)
+
+**Backend — standings on team changes:**
+- `TeamService` now calls `StandingComputeService.recomputeStandings()` after every team create, update, and delete
+- Standings are populated with zeroed stats as soon as teams are added (before any fixture results)
+- The Standings tab in the user's league view shows all teams immediately
+- `TeamServiceTest` updated with mocked `StandingComputeService`
+
 ---
 
 ## Where to Pick Up Next
 
-### Milestone 6 — Polish & Deploy
-- Loading states, error handling, empty states
+### Milestone 6 (remaining) — Deploy
 - Dockerfiles, AWS deployment (ECS/Fargate, S3+CloudFront, RDS)
 
 ### Milestone 7 — API-Football Sync (Optional)

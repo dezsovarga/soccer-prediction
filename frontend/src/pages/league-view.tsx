@@ -66,43 +66,53 @@ function FixtureCard({
     setDirty(false);
   }
 
+  const kickoffDate = new Date(fixture.kickoff).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const hasResult = fixture.status === 'FINISHED' || fixture.status === 'LIVE';
+
   return (
     <div className="flex flex-col gap-2 rounded-md border p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-5 w-5" />}
-          <span className="font-medium">{fixture.homeTeam}</span>
+      {/* Match header: teams + score/time */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        {/* Home team */}
+        <div className="flex items-center gap-1.5">
+          {fixture.homeTeamLogo && <img src={fixture.homeTeamLogo} alt="" className="h-5 w-5 shrink-0" />}
+          <span className="font-medium text-sm">{fixture.homeTeam}</span>
         </div>
-        <div className="flex items-center gap-2">
-          {fixture.status === 'FINISHED' || fixture.status === 'LIVE' ? (
-            <span className="font-bold">
-              {fixture.homeScore} - {fixture.awayScore}
-            </span>
+
+        {/* Center: score or time */}
+        <div className="flex flex-col items-center">
+          {hasResult ? (
+            <span className="text-lg font-bold">{fixture.homeScore} - {fixture.awayScore}</span>
           ) : (
-            <span className="text-sm text-muted-foreground">
-              {new Date(fixture.kickoff).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
+            <span className="text-xs text-center text-muted-foreground leading-tight">{kickoffDate}</span>
           )}
-          <Badge variant={statusBadgeVariant(fixture.status)}>{fixture.status}</Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{fixture.awayTeam}</span>
-          {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-5 w-5" />}
+
+        {/* Away team */}
+        <div className="flex items-center justify-end gap-1.5">
+          <span className="font-medium text-sm text-right">{fixture.awayTeam}</span>
+          {fixture.awayTeamLogo && <img src={fixture.awayTeamLogo} alt="" className="h-5 w-5 shrink-0" />}
         </div>
       </div>
 
+      {/* Status badge */}
+      <div className="flex justify-center">
+        <Badge variant={statusBadgeVariant(fixture.status)}>{fixture.status}</Badge>
+      </div>
+
+      {/* Prediction input */}
       {canPredict && (
-        <div className="flex items-center justify-center gap-2 pt-1">
-          <span className="text-xs text-muted-foreground">Your prediction:</span>
+        <div className="flex items-center justify-center gap-2 border-t pt-2">
           <Input
             type="number"
             min={0}
-            className="w-14 text-center"
+            className="w-12 text-center"
             placeholder="-"
             value={homeScore}
             onChange={(e) => { setHomeScore(e.target.value); setDirty(true); }}
@@ -112,7 +122,7 @@ function FixtureCard({
           <Input
             type="number"
             min={0}
-            className="w-14 text-center"
+            className="w-12 text-center"
             placeholder="-"
             value={awayScore}
             onChange={(e) => { setAwayScore(e.target.value); setDirty(true); }}
@@ -128,8 +138,9 @@ function FixtureCard({
         </div>
       )}
 
+      {/* Locked prediction display */}
       {!canPredict && prediction && (
-        <div className="flex items-center justify-center gap-2 pt-1 text-sm">
+        <div className="flex items-center justify-center gap-2 border-t pt-2 text-sm">
           <span className="text-muted-foreground">Your prediction:</span>
           <span className="font-medium">{prediction.homeScore} - {prediction.awayScore}</span>
           {prediction.pointsEarned !== null && (
@@ -306,40 +317,80 @@ function PredictionsTable({ predictions }: { predictions: PredictionDto[] }) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>MD</TableHead>
-          <TableHead>Match</TableHead>
-          <TableHead className="text-center">Score</TableHead>
-          <TableHead className="text-center">Your Prediction</TableHead>
-          <TableHead className="text-center">Points</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      {/* Mobile card list */}
+      <div className="space-y-2 md:hidden">
         {sorted.map((p) => (
-          <TableRow key={p.id}>
-            <TableCell>{p.matchday}</TableCell>
-            <TableCell>{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</TableCell>
-            <TableCell className="text-center">
-              {p.fixtureHomeScore !== null && p.fixtureAwayScore !== null
-                ? `${p.fixtureHomeScore} - ${p.fixtureAwayScore}`
-                : <span className="text-muted-foreground">-</span>}
-            </TableCell>
-            <TableCell className="text-center font-medium">{p.homeScore} - {p.awayScore}</TableCell>
-            <TableCell className="text-center">
+          <div key={p.id} className="rounded-lg border p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</span>
+              <span className="text-xs text-muted-foreground">MD {p.matchday}</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <div className="flex items-center gap-3">
+                <div>
+                  <span className="text-xs text-muted-foreground">Score: </span>
+                  <span className="font-medium">
+                    {p.fixtureHomeScore !== null && p.fixtureAwayScore !== null
+                      ? `${p.fixtureHomeScore} - ${p.fixtureAwayScore}`
+                      : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">You: </span>
+                  <span className="font-medium">{p.homeScore} - {p.awayScore}</span>
+                </div>
+              </div>
               {p.pointsEarned !== null ? (
                 <Badge variant={p.pointsEarned > 0 ? 'default' : 'outline'}>
-                  {p.pointsEarned}
+                  {p.pointsEarned} pts
                 </Badge>
               ) : (
                 <span className="text-muted-foreground">-</span>
               )}
-            </TableCell>
-          </TableRow>
+            </div>
+          </div>
         ))}
-      </TableBody>
-    </Table>
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>MD</TableHead>
+              <TableHead>Match</TableHead>
+              <TableHead className="text-center">Score</TableHead>
+              <TableHead className="text-center">Your Prediction</TableHead>
+              <TableHead className="text-center">Points</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>{p.matchday}</TableCell>
+                <TableCell>{p.fixtureHomeTeam} vs {p.fixtureAwayTeam}</TableCell>
+                <TableCell className="text-center">
+                  {p.fixtureHomeScore !== null && p.fixtureAwayScore !== null
+                    ? `${p.fixtureHomeScore} - ${p.fixtureAwayScore}`
+                    : <span className="text-muted-foreground">-</span>}
+                </TableCell>
+                <TableCell className="text-center font-medium">{p.homeScore} - {p.awayScore}</TableCell>
+                <TableCell className="text-center">
+                  {p.pointsEarned !== null ? (
+                    <Badge variant={p.pointsEarned > 0 ? 'default' : 'outline'}>
+                      {p.pointsEarned}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 
@@ -356,43 +407,70 @@ function LeaderboardTable({ entries, isLoading, error, onRetry }: {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-10">#</TableHead>
-          <TableHead>Player</TableHead>
-          <TableHead className="text-center">Exact</TableHead>
-          <TableHead className="text-center">Correct</TableHead>
-          <TableHead className="text-center">Top Scorer</TableHead>
-          <TableHead className="text-center">Winner</TableHead>
-          <TableHead className="text-center">Total</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      {/* Mobile card list */}
+      <div className="space-y-2 md:hidden">
         {entries.map((entry) => (
-          <TableRow key={entry.userId}>
-            <TableCell className="font-medium">{entry.rank}</TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                {entry.pictureUrl && (
-                  <img src={entry.pictureUrl} alt="" className="h-6 w-6 rounded-full" />
-                )}
-                <span>{entry.displayName}</span>
+          <div key={entry.userId} className="flex items-center gap-3 rounded-lg border p-3">
+            <span className="w-6 shrink-0 text-center font-bold text-muted-foreground">{entry.rank}</span>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              {entry.pictureUrl && (
+                <img src={entry.pictureUrl} alt="" className="h-7 w-7 shrink-0 rounded-full" />
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{entry.displayName}</p>
+                <div className="flex gap-2 text-xs text-muted-foreground">
+                  <span>{entry.correctScores} exact</span>
+                  <span>{entry.correctOutcomes} correct</span>
+                </div>
               </div>
-            </TableCell>
-            <TableCell className="text-center">{entry.correctScores}</TableCell>
-            <TableCell className="text-center">{entry.correctOutcomes}</TableCell>
-            <TableCell className="text-center">
-              {entry.topScorerPoints !== null ? entry.topScorerPoints : '-'}
-            </TableCell>
-            <TableCell className="text-center">
-              {entry.leagueWinnerPoints !== null ? entry.leagueWinnerPoints : '-'}
-            </TableCell>
-            <TableCell className="text-center font-bold">{entry.totalPoints}</TableCell>
-          </TableRow>
+            </div>
+            <span className="shrink-0 text-lg font-bold">{entry.totalPoints}</span>
+          </div>
         ))}
-      </TableBody>
-    </Table>
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10">#</TableHead>
+              <TableHead>Player</TableHead>
+              <TableHead className="text-center">Exact</TableHead>
+              <TableHead className="text-center">Correct</TableHead>
+              <TableHead className="text-center">Top Scorer</TableHead>
+              <TableHead className="text-center">Winner</TableHead>
+              <TableHead className="text-center">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {entries.map((entry) => (
+              <TableRow key={entry.userId}>
+                <TableCell className="font-medium">{entry.rank}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {entry.pictureUrl && (
+                      <img src={entry.pictureUrl} alt="" className="h-6 w-6 rounded-full" />
+                    )}
+                    <span>{entry.displayName}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">{entry.correctScores}</TableCell>
+                <TableCell className="text-center">{entry.correctOutcomes}</TableCell>
+                <TableCell className="text-center">
+                  {entry.topScorerPoints !== null ? entry.topScorerPoints : '-'}
+                </TableCell>
+                <TableCell className="text-center">
+                  {entry.leagueWinnerPoints !== null ? entry.leagueWinnerPoints : '-'}
+                </TableCell>
+                <TableCell className="text-center font-bold">{entry.totalPoints}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
 
@@ -425,22 +503,24 @@ export function LeagueViewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <Link to="/" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
           &larr; Back
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">{league.name}</h1>
+        <h1 className="text-xl font-bold tracking-tight md:text-2xl">{league.name}</h1>
         <Badge variant="secondary">{league.season}</Badge>
       </div>
 
       <Tabs defaultValue="fixtures">
-        <TabsList>
-          <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
-          <TabsTrigger value="predictions">My Predictions</TabsTrigger>
-          <TabsTrigger value="picks">Picks</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="standings">Standings</TabsTrigger>
-        </TabsList>
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <TabsList className="w-full md:w-auto">
+            <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
+            <TabsTrigger value="predictions">Predictions</TabsTrigger>
+            <TabsTrigger value="picks">Picks</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+            <TabsTrigger value="standings">Standings</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="fixtures" className="space-y-4">
           {fixturesLoading && <PageSpinner message="Loading fixtures..." />}
@@ -511,41 +591,57 @@ export function LeagueViewPage() {
                   </CardHeader>
                 )}
                 <CardContent className={groupName ? '' : 'pt-6'}>
-                  <Table>
+                  <div className="overflow-x-auto">
+                  <Table className="min-w-[540px] table-fixed">
+                    <colgroup>
+                      <col className="w-8" />
+                      <col className="w-[140px] md:w-[180px]" />
+                      <col />
+                      <col />
+                      <col />
+                      <col />
+                      <col />
+                      <col />
+                      <col />
+                      <col />
+                    </colgroup>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-10">#</TableHead>
+                        <TableHead>#</TableHead>
                         <TableHead>Team</TableHead>
                         <TableHead className="text-center">P</TableHead>
+                        <TableHead className="text-center">GD</TableHead>
+                        <TableHead className="text-center">Pts</TableHead>
                         <TableHead className="text-center">W</TableHead>
                         <TableHead className="text-center">D</TableHead>
                         <TableHead className="text-center">L</TableHead>
                         <TableHead className="text-center">GF</TableHead>
                         <TableHead className="text-center">GA</TableHead>
-                        <TableHead className="text-center">GD</TableHead>
-                        <TableHead className="text-center">Pts</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {groupStandings.map((s) => (
                         <TableRow key={s.id}>
                           <TableCell>{s.rank}</TableCell>
-                          <TableCell className="flex items-center gap-2">
-                            {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-5" />}
-                            {s.teamName}
+                          <TableCell>
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              {s.teamLogo && <img src={s.teamLogo} alt="" className="h-5 w-5 shrink-0" />}
+                              <span className="truncate" title={s.teamName}>{s.teamName}</span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">{s.played}</TableCell>
+                          <TableCell className="text-center">{s.goalDiff}</TableCell>
+                          <TableCell className="text-center font-bold">{s.points}</TableCell>
                           <TableCell className="text-center">{s.won}</TableCell>
                           <TableCell className="text-center">{s.drawn}</TableCell>
                           <TableCell className="text-center">{s.lost}</TableCell>
                           <TableCell className="text-center">{s.goalsFor}</TableCell>
                           <TableCell className="text-center">{s.goalsAgainst}</TableCell>
-                          <TableCell className="text-center">{s.goalDiff}</TableCell>
-                          <TableCell className="text-center font-bold">{s.points}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             ));

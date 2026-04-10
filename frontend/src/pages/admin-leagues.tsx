@@ -310,52 +310,93 @@ export function AdminLeaguesPage() {
             <EmptyState message="No leagues created yet." />
           )}
           {leagues && leagues.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Season</TableHead>
-                  <TableHead>Join Code</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile card list */}
+              <div className="space-y-3 md:hidden">
                 {leagues.map((league) => (
-                  <TableRow key={league.id}>
-                    <TableCell className="font-medium">{league.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={league.mode === 'MANUAL' ? 'default' : 'secondary'}>
-                        {league.mode === 'MANUAL' ? 'Manual' : 'API'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell><Badge variant="secondary">{league.season}</Badge></TableCell>
-                    <TableCell>
-                      <code className="rounded bg-muted px-2 py-1 text-sm">{league.joinCode}</code>
-                    </TableCell>
-                    <TableCell>{league.memberCount}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setEditingLeague(league)}>
-                          Edit
-                        </Button>
-                        {league.mode === 'MANUAL' && (
-                          <>
-                            <Link to={`/admin/leagues/${league.id}/teams`}>
-                              <Button variant="outline" size="sm">Teams</Button>
-                            </Link>
-                            <Link to={`/admin/leagues/${league.id}/fixtures`}>
-                              <Button variant="outline" size="sm">Fixtures</Button>
-                            </Link>
-                          </>
-                        )}
+                  <div key={league.id} className="rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium">{league.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={league.mode === 'MANUAL' ? 'default' : 'secondary'}>
+                          {league.mode === 'MANUAL' ? 'Manual' : 'API'}
+                        </Badge>
+                        <Badge variant="secondary">{league.season}</Badge>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                      <span>Code: <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{league.joinCode}</code></span>
+                      <span>{league.memberCount} members</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setEditingLeague(league)}>
+                        Edit
+                      </Button>
+                      {league.mode === 'MANUAL' && (
+                        <>
+                          <Link to={`/admin/leagues/${league.id}/teams`}>
+                            <Button variant="outline" size="sm">Teams</Button>
+                          </Link>
+                          <Link to={`/admin/leagues/${league.id}/fixtures`}>
+                            <Button variant="outline" size="sm">Fixtures</Button>
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Mode</TableHead>
+                      <TableHead>Season</TableHead>
+                      <TableHead>Join Code</TableHead>
+                      <TableHead>Members</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leagues.map((league) => (
+                      <TableRow key={league.id}>
+                        <TableCell className="font-medium">{league.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={league.mode === 'MANUAL' ? 'default' : 'secondary'}>
+                            {league.mode === 'MANUAL' ? 'Manual' : 'API'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell><Badge variant="secondary">{league.season}</Badge></TableCell>
+                        <TableCell>
+                          <code className="rounded bg-muted px-2 py-1 text-sm">{league.joinCode}</code>
+                        </TableCell>
+                        <TableCell>{league.memberCount}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setEditingLeague(league)}>
+                              Edit
+                            </Button>
+                            {league.mode === 'MANUAL' && (
+                              <>
+                                <Link to={`/admin/leagues/${league.id}/teams`}>
+                                  <Button variant="outline" size="sm">Teams</Button>
+                                </Link>
+                                <Link to={`/admin/leagues/${league.id}/fixtures`}>
+                                  <Button variant="outline" size="sm">Fixtures</Button>
+                                </Link>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
