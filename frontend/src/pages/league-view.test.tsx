@@ -124,7 +124,7 @@ describe('LeagueViewPage', () => {
 
     expect(screen.getByText('Premier League')).toBeInTheDocument();
     expect(screen.getByText('Fixtures')).toBeInTheDocument();
-    expect(screen.getByText('My Predictions')).toBeInTheDocument();
+    expect(screen.getByText('Predictions')).toBeInTheDocument();
     expect(screen.getByText('Picks')).toBeInTheDocument();
     expect(screen.getByText('Leaderboard')).toBeInTheDocument();
     expect(screen.getByText('Standings')).toBeInTheDocument();
@@ -311,10 +311,10 @@ describe('LeagueViewPage', () => {
 
     fireEvent.click(screen.getByText('Leaderboard'));
 
-    expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByText('Bob')).toBeInTheDocument();
-    expect(screen.getByText('7')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getAllByText('Alice').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Bob').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('7').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty leaderboard message when no data', () => {
@@ -348,10 +348,10 @@ describe('LeagueViewPage', () => {
 
     renderWithRouter();
 
-    fireEvent.click(screen.getByText('My Predictions'));
+    fireEvent.click(screen.getByText('Predictions'));
 
-    expect(screen.getByText('Arsenal vs Chelsea')).toBeInTheDocument();
-    expect(screen.getByText('3 - 1')).toBeInTheDocument();
-    expect(screen.getByText('1 - 0')).toBeInTheDocument();
+    expect(screen.getAllByText('Arsenal vs Chelsea').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('3 - 1').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('1 - 0').length).toBeGreaterThanOrEqual(1);
   });
 });

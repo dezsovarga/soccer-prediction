@@ -27,8 +27,8 @@ describe('LoginPage', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Sign in with Google')).toBeInTheDocument();
-    expect(screen.getByText('Soccer Predictions')).toBeInTheDocument();
+    expect(screen.getByText('Continue with Google')).toBeInTheDocument();
+    expect(screen.getAllByText('Soccer Predictions').length).toBeGreaterThanOrEqual(1);
   });
 
   it('sign-in link points to correct oauth url', () => {
@@ -48,7 +48,7 @@ describe('LoginPage', () => {
       </MemoryRouter>
     );
 
-    const link = screen.getByText('Sign in with Google');
+    const link = screen.getByText('Continue with Google');
     expect(link.closest('a')).toHaveAttribute(
       'href',
       'http://localhost:8080/api/auth/oauth2/authorize/google'

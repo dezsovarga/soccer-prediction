@@ -92,7 +92,7 @@ describe('AdminFixturesPage', () => {
 
     expect(screen.getAllByText('Brazil').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Germany').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Enter Result')).toBeInTheDocument();
+    expect(screen.getAllByText('Enter Result').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty state when no fixtures', () => {

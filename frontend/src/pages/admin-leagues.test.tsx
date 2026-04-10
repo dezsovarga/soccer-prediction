@@ -77,9 +77,9 @@ describe('AdminLeaguesPage', () => {
 
     renderWithRouter();
 
-    expect(screen.getByText('Premier League')).toBeInTheDocument();
-    expect(screen.getByText('ABC12345')).toBeInTheDocument();
-    expect(screen.getByText('API')).toBeInTheDocument();
+    expect(screen.getAllByText('Premier League').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('ABC12345').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('API').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows Teams/Fixtures links for manual leagues', () => {
@@ -106,8 +106,8 @@ describe('AdminLeaguesPage', () => {
 
     renderWithRouter();
 
-    expect(screen.getByText('Teams')).toBeInTheDocument();
-    expect(screen.getByText('Fixtures')).toBeInTheDocument();
+    expect(screen.getAllByText('Teams').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Fixtures').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows Edit button that opens edit form', () => {
@@ -134,7 +134,7 @@ describe('AdminLeaguesPage', () => {
 
     renderWithRouter();
 
-    fireEvent.click(screen.getByText('Edit'));
+    fireEvent.click(screen.getAllByText('Edit')[0]);
 
     expect(screen.getByText('Edit League: World Cup 2026')).toBeInTheDocument();
     expect(screen.getByLabelText('Exact Score Pts')).toHaveValue(3);

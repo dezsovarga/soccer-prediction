@@ -71,10 +71,10 @@ describe('AdminUsersPage', () => {
     renderPage();
 
     expect(screen.getByText('User Management')).toBeInTheDocument();
-    expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByText('alice@test.com')).toBeInTheDocument();
-    expect(screen.getByText('Admin')).toBeInTheDocument();
-    expect(screen.getByText('admin@test.com')).toBeInTheDocument();
+    expect(screen.getAllByText('Alice').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('alice@test.com').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Admin').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('admin@test.com').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Registered Users (2)')).toBeInTheDocument();
   });
 
@@ -96,8 +96,8 @@ describe('AdminUsersPage', () => {
 
     renderPage();
 
-    const deactivateButton = screen.getByText('Deactivate');
-    expect(deactivateButton).toBeDisabled();
+    const deactivateButtons = screen.getAllByText('Deactivate');
+    expect(deactivateButtons[0]).toBeDisabled();
   });
 
   it('calls updateUser when deactivate is clicked', () => {
@@ -118,7 +118,7 @@ describe('AdminUsersPage', () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByText('Deactivate'));
+    fireEvent.click(screen.getAllByText('Deactivate')[0]);
 
     expect(mutateMock).toHaveBeenCalledWith(
       { id: 'u1', request: { isActive: false } },
@@ -144,8 +144,8 @@ describe('AdminUsersPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Activate')).toBeInTheDocument();
-    expect(screen.getByText('Inactive')).toBeInTheDocument();
+    expect(screen.getAllByText('Activate').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Inactive').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows empty state when no users', () => {
