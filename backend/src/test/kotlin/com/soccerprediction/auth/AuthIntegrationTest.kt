@@ -1,6 +1,13 @@
 package com.soccerprediction.auth
 
+import com.soccerprediction.fixture.FixtureRepository
 import com.soccerprediction.league.LeagueMemberRepository
+import com.soccerprediction.league.LeagueRepository
+import com.soccerprediction.prediction.LeagueWinnerPickRepository
+import com.soccerprediction.prediction.PredictionRepository
+import com.soccerprediction.prediction.TopScorerPickRepository
+import com.soccerprediction.standing.StandingRepository
+import com.soccerprediction.team.TeamRepository
 import com.soccerprediction.user.User
 import com.soccerprediction.user.UserRepository
 import com.soccerprediction.user.UserRole
@@ -24,14 +31,42 @@ class AuthIntegrationTest {
     private lateinit var mockMvc: MockMvc
 
     @Autowired
+    private lateinit var leagueWinnerPickRepository: LeagueWinnerPickRepository
+
+    @Autowired
+    private lateinit var topScorerPickRepository: TopScorerPickRepository
+
+    @Autowired
+    private lateinit var predictionRepository: PredictionRepository
+
+    @Autowired
+    private lateinit var standingRepository: StandingRepository
+
+    @Autowired
+    private lateinit var fixtureRepository: FixtureRepository
+
+    @Autowired
+    private lateinit var teamRepository: TeamRepository
+
+    @Autowired
     private lateinit var leagueMemberRepository: LeagueMemberRepository
+
+    @Autowired
+    private lateinit var leagueRepository: LeagueRepository
 
     @Autowired
     private lateinit var userRepository: UserRepository
 
     @BeforeEach
     fun setup() {
+        leagueWinnerPickRepository.deleteAll()
+        topScorerPickRepository.deleteAll()
+        predictionRepository.deleteAll()
+        standingRepository.deleteAll()
+        fixtureRepository.deleteAll()
+        teamRepository.deleteAll()
         leagueMemberRepository.deleteAll()
+        leagueRepository.deleteAll()
         userRepository.deleteAll()
     }
 
