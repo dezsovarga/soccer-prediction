@@ -1,8 +1,11 @@
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
+import { useTheme } from '@/hooks/use-theme';
 import { getLoginUrl } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { FullPageSpinner } from '@/components/spinner';
+import { Sun, Moon } from 'lucide-react';
 
 const errorMessages: Record<string, string> = {
   account_deactivated: 'Your account has been deactivated. Please contact an administrator.',
@@ -69,6 +72,7 @@ function SoccerBallIcon({ className }: { className?: string }) {
 
 export function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
 
@@ -82,6 +86,18 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[oklch(0.25_0.08_260)] md:flex-row md:bg-muted/30">
+      <div className="absolute right-4 top-4 z-10">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="text-white/70 hover:text-white md:text-muted-foreground md:hover:text-foreground"
+        >
+          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+      </div>
+
       {/* Left panel - hero (hidden on mobile, shown on desktop) */}
       <div className="hidden flex-1 flex-col justify-between bg-[oklch(0.25_0.08_260)] p-10 text-white md:flex lg:p-16">
         <div className="flex items-center gap-3">

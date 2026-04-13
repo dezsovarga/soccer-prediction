@@ -4,7 +4,7 @@
 
 A web app where friends predict soccer match scores, top goalscorers, and tournament winners. Users log in with Google, join leagues, and compete on a shared leaderboard. Admin manages leagues, teams, fixtures, and scoring rules.
 
-- **Repo**: `dezsovarga/soccer-prediction` (private GitHub)
+- **Repo**: `dezsovarga/soccer-prediction` (public GitHub)
 - **Backend**: `/backend` — Kotlin + Spring Boot 3.4.4 + Maven + PostgreSQL
 - **Frontend**: `/frontend` — React 18 + TypeScript + Vite 8 + Tailwind CSS v4 + shadcn/ui v4
 - **Spec**: `spec.md` — full requirements, data model (11 tables), API endpoints, milestones
@@ -115,18 +115,54 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 - Added `fixtureHomeTeamLogo` and `fixtureAwayTeamLogo` to `PredictionDto` end-to-end: backend DTO, mapper, OpenAPI spec, frontend type, and both mobile/desktop predictions views
 - Team flag images now rendered with rectangular aspect ratio (`object-contain`) consistently across fixtures, predictions, picks, and standings views
 
-### Sample League Data
+### Dark Mode ✅
 
-- Created "World Cup 2026" manual league (join code: `WC2026GRP`) with 4 groups (A-D), 16 teams, and 24 round-robin fixtures via direct SQL insert
-- Groups: A (Brazil, Germany, Japan, Morocco), B (Argentina, France, South Korea, Nigeria), C (Spain, England, Mexico, Australia), D (Italy, Netherlands, USA, Senegal)
-- 3 matchdays (June 14-25, 2026), 2 games per group per matchday
+- Tailwind CSS v4 dark mode via `.dark` class on `<html>` element (CSS variables already existed in `index.css`)
+- `useTheme` hook (`frontend/src/hooks/use-theme.ts`) — manages dark/light state, persists to `localStorage`, respects system `prefers-color-scheme` on first visit
+- Inline script in `index.html` applies stored theme before React mounts (prevents flash of wrong theme)
+- Sun/Moon toggle button (lucide-react icons) in navbar and login page top-right corner
+- `matchMedia` mock added to test setup for jsdom compatibility
+- 4 unit tests for the `useTheme` hook
+
+### FIFA World Cup 2026 Seed Data ✅
+
+**Automatic seeding on backend startup:**
+- `WorldCupDataSeeder` (`backend/src/main/kotlin/com/soccerprediction/common/WorldCupDataSeeder.kt`) — `ApplicationRunner` that checks for WC2026 league on startup; seeds if absent, skips if present
+- `@Profile("!test")` — excluded from H2 test context (SQL uses PostgreSQL-specific `gen_random_uuid()`)
+- SQL file: `backend/src/main/resources/db/seed-worldcup-2026.sql` — executed via Spring's `ScriptUtils.executeSqlScript()`
+
+**Data seeded (join code: `WC2026`):**
+- 1 league: "FIFA World Cup 2026" (mode: MANUAL, season: 2026)
+- 48 teams across 12 groups (A-L), 4 per group, with country codes and flag logos from flagcdn.com
+- 72 group stage fixtures with UTC kickoff times matching the official FIFA schedule (June 11-28, 2026)
+- 48 standings entries initialized to zero
+- Team logos propagated to fixtures (`home_team_logo`, `away_team_logo`) and standings (`team_logo`)
+
+**Groups match the official December 2025 draw:**
+
+| Group | Teams |
+|-------|-------|
+| A | Mexico, South Africa, South Korea, Czech Republic |
+| B | Canada, Bosnia and Herzegovina, Qatar, Switzerland |
+| C | Brazil, Morocco, Haiti, Scotland |
+| D | United States, Paraguay, Australia, Turkey |
+| E | Germany, Curaçao, Ivory Coast, Ecuador |
+| F | Netherlands, Japan, Sweden, Tunisia |
+| G | Belgium, Egypt, Iran, New Zealand |
+| H | Spain, Cape Verde, Saudi Arabia, Uruguay |
+| I | France, Senegal, Iraq, Norway |
+| J | Argentina, Algeria, Austria, Jordan |
+| K | Portugal, Congo DR, Uzbekistan, Colombia |
+| L | England, Croatia, Ghana, Panama |
+
+**Standalone shell script** (`scripts/seed-worldcup-2026.sh`) also available for manual seeding via `docker exec` into the PostgreSQL container.
 
 ---
 
 ## Current Test Counts
 
-- **Backend**: 112 tests passing (`cd backend && ./mvnw test`)
-- **Frontend**: 78 tests passing (`cd frontend && npm test -- --run`)
+- **Backend**: 109 tests passing (`cd backend && ./mvnw test`)
+- **Frontend**: 82 tests passing (`cd frontend && npm test -- --run`)
 
 ---
 
@@ -153,6 +189,15 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 | DB schema management | Hibernate `ddl-auto: update` | Good enough for dev; manual `ALTER TABLE` needed for NOT NULL → nullable changes on existing data |
 | Testing — backend | JUnit 5 + MockK (unit), Spring Boot Test + H2 (integration) | Per CLAUDE.md |
 | Testing — frontend | Vitest + React Testing Library | Per CLAUDE.md |
+| Hosting | DigitalOcean Droplet (2GB, Frankfurt) | Cheapest option supporting Docker + Java |
+| SSL termination | Caddy reverse proxy | Auto Let's Encrypt, zero config |
+| Temporary domain | nip.io (`68-183-66-33.nip.io`) | Free, works with Google OAuth (requires real domain, not bare IP) |
+| Container registry | GitHub Container Registry (GHCR) | Free for public repos, integrated with GitHub Actions |
+| Deploy strategy | Build in CI → push to GHCR → pull on droplet | Avoids building on the small droplet |
+| Reverse proxy chain | Caddy → Nginx (frontend) → Spring Boot (backend) | Caddy handles SSL, Nginx serves SPA + proxies `/api/`, backend handles business logic |
+| Dark mode | Tailwind `.dark` class + `localStorage` + system preference | Zero-dependency, no flash on reload via inline `<script>` |
+| WC2026 seed data | `ApplicationRunner` + `ScriptUtils` on startup | Automatic, idempotent (checks `join_code='WC2026'`), excluded from tests via `@Profile("!test")` |
+| Seed SQL style | Plain INSERT/UPDATE, no `DO $$` blocks | Compatible with Spring's `ScriptUtils` semicolon-based statement parsing |
 
 ---
 
@@ -160,7 +205,11 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 
 1. **Hibernate `ddl-auto: update` doesn't drop NOT NULL constraints.** When making a column nullable (e.g., `api_league_id`), you must manually run `ALTER TABLE ... ALTER COLUMN ... DROP NOT NULL` on the existing PostgreSQL database. The Docker container DB is: `docker exec soccer-prediction-db psql -U postgres -d soccer_prediction -c "..."`.
 
-2. **OAuth2 callback URL**: Google Cloud Console must have `http://localhost:8080/api/auth/callback/google` as authorized redirect URI.
+2. **OAuth2 callback URL**: Google Cloud Console must have `http://localhost:8080/api/auth/callback/google` (local dev) and `https://68-183-66-33.nip.io/api/auth/callback/google` (production) as authorized redirect URIs. Google OAuth does not allow bare IP addresses as origins — a domain (even nip.io) is required.
+
+4. **Forward headers in production**: `server.forward-headers-strategy: framework` is critical — without it, Spring generates `http://` OAuth redirect URIs behind the HTTPS Caddy proxy, causing Google OAuth to fail.
+
+5. **Nginx must forward `X-Forwarded-*` headers**: The frontend Nginx uses `$http_x_forwarded_proto` (not `$scheme`) to pass through Caddy's headers to the backend. Using `$scheme` would reset them to `http` since Nginx-to-backend is plain HTTP.
 
 3. **Frontend tests with duplicate text**: When a team name appears in both a `<select>` option and a table cell, use `getAllByText()` instead of `getByText()`.
 
@@ -201,9 +250,49 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 
 ## Where to Pick Up Next
 
-### Milestone 6 (remaining) — Deploy
-- Dockerfiles for backend/frontend, cloud deployment (e.g. AWS ECS/Fargate, S3+CloudFront, RDS)
-- CI pipeline is already in place (GitHub Actions)
+- **Custom domain**: Buy a domain, point DNS to `68.183.66.33`, update `DOMAIN` + `FRONTEND_URL` in `.env.production`, update Google OAuth URIs. Caddy auto-provisions SSL.
+- **Milestone 7**: API-Football sync (only if using paid plans)
+
+---
+
+### Milestone 6 (remaining) — Production Deployment ✅
+
+**Infrastructure (DigitalOcean):**
+- Droplet: Ubuntu 24.04, 2GB RAM, Frankfurt (`fra1`), IP `68.183.66.33`
+- Firewall: only ports 22 (SSH), 80 (HTTP), 443 (HTTPS) open
+- Domain: `68-183-66-33.nip.io` via nip.io (free DNS, maps to droplet IP — no purchased domain yet)
+- SSL: automatic via Caddy + Let's Encrypt
+
+**Docker setup:**
+- `backend/Dockerfile` — multi-stage build: JDK 17 compile → JRE 17 runtime
+- `frontend/Dockerfile` — multi-stage build: Node 22 `npm run build` → Nginx serving static files
+- `frontend/nginx.conf` — serves SPA (fallback to `index.html`), proxies `/api/` to backend container, forwards `X-Forwarded-*` headers from Caddy
+- `docker-compose.prod.yml` — 4 services: `postgres` (16-alpine), `backend`, `frontend`, `caddy` (2-alpine for HTTPS termination)
+- `caddy/Caddyfile` — reverse proxies to frontend container, auto-provisions SSL certificates
+- `.env.production.example` — template for secrets (DB password, Google OAuth, API-Football key, domain)
+- `backend/.dockerignore`, `frontend/.dockerignore` — keep build contexts clean
+
+**Backend changes for production:**
+- `application.yml` — added `server.forward-headers-strategy: framework` (needed for correct OAuth redirect URIs behind reverse proxy)
+- `application.yml` — added `server.servlet.session.cookie.secure: ${SESSION_COOKIE_SECURE:false}` (enabled in production compose)
+
+**CI/CD pipeline (`.github/workflows/deploy.yml`):**
+- Triggers: on successful CI workflow completion on `main` branch
+- Build: uses Docker Buildx with GitHub Actions cache (`type=gha`) for fast rebuilds
+- Push: images to GitHub Container Registry (`ghcr.io/dezsovarga/soccer-prediction/backend:latest` and `/frontend:latest`), tagged with both `latest` and commit SHA
+- Deploy: SCPs `docker-compose.prod.yml` + `caddy/Caddyfile` to droplet, then SSHs in to pull new images and restart containers
+- No GHCR auth needed on droplet (repo is public → images are public)
+- Required GitHub secrets: `DROPLET_IP`, `SSH_PRIVATE_KEY`, `DOMAIN`
+
+**Server setup:**
+- `scripts/server-setup.sh` — one-time droplet provisioning script (installs Docker, creates app directory, templates `.env.production`)
+- App deployed to `/opt/soccer-prediction/` on the droplet
+- First deploy was done by copying source + building on droplet; subsequent deploys pull pre-built GHCR images
+
+**Other changes:**
+- `.gitignore` — added `.env.production`
+- Repo visibility changed from private to public (simplifies GHCR image pulling)
+- `doctl` CLI installed locally for managing DigitalOcean resources
 
 ### Milestone 7 — API-Football Sync (Optional)
 - Only needed if using paid API-Football plans
@@ -218,8 +307,21 @@ This was the largest milestone. The free API-Football plan doesn't cover World C
 | Conventions | `CLAUDE.md` |
 | OpenAPI spec | `backend/openapi.yaml` |
 | Dev startup | `dev.sh` |
-| Docker Compose | `docker-compose.yml` |
+| Docker Compose (dev) | `docker-compose.yml` |
+| Docker Compose (prod) | `docker-compose.prod.yml` |
+| Backend Dockerfile | `backend/Dockerfile` |
+| Frontend Dockerfile | `frontend/Dockerfile` |
+| Frontend Nginx config | `frontend/nginx.conf` |
+| Caddy config | `caddy/Caddyfile` |
+| Env template (prod) | `.env.production.example` |
+| Server setup script | `scripts/server-setup.sh` |
+| CI pipeline | `.github/workflows/ci.yml` |
+| Deploy pipeline | `.github/workflows/deploy.yml` |
 | Backend entry | `backend/src/main/kotlin/com/soccerprediction/SoccerPredictionApplication.kt` |
 | Frontend entry | `frontend/src/App.tsx` |
 | Frontend types | `frontend/src/lib/types.ts` |
 | Frontend API | `frontend/src/lib/api.ts` |
+| Dark mode hook | `frontend/src/hooks/use-theme.ts` |
+| WC2026 data seeder | `backend/src/main/kotlin/com/soccerprediction/common/WorldCupDataSeeder.kt` |
+| WC2026 seed SQL | `backend/src/main/resources/db/seed-worldcup-2026.sql` |
+| WC2026 shell script | `scripts/seed-worldcup-2026.sh` |

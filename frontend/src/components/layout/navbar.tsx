@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { useTheme } from '@/hooks/use-theme';
 import { getLogoutUrl } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface NavbarProps {
@@ -18,6 +20,7 @@ interface NavbarProps {
 
 export function Navbar({ onMenuToggle, showMenuButton }: NavbarProps) {
   const { user, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const initials = user?.displayName
     ?.split(' ')
@@ -61,6 +64,15 @@ export function Navbar({ onMenuToggle, showMenuButton }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+
           {isAdmin && (
             <Button variant="ghost" size="sm" render={<Link to="/admin" />}>
               Admin
