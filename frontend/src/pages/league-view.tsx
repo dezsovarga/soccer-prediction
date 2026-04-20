@@ -76,7 +76,7 @@ function FixtureCard({
   const hasResult = fixture.status === 'FINISHED' || fixture.status === 'LIVE';
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border p-3">
+    <div className="flex flex-col gap-2 rounded-md border p-3 bg-gray-100 dark:bg-gray-800">
       {/* Match header: teams + score/time */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         {/* Home team */}
@@ -594,7 +594,7 @@ export function LeagueViewPage() {
             const sortedGroups = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
 
             return sortedGroups.map(([groupName, groupStandings]) => (
-              <Card key={groupName || '__all'}>
+              <Card key={groupName || '__all'} className="bg-gray-100 dark:bg-gray-800">
                 {groupName && (
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Group {groupName}</CardTitle>
