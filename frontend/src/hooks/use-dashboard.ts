@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { fetchFixtures, fetchMyPredictions, fetchLeaderboard } from '@/lib/api';
-import type { LeagueSummaryDto, FixtureDto, PredictionDto, LeaderboardEntryDto } from '@/lib/types';
+import type { LeagueSummaryDto, FixtureDto, PredictionDto } from '@/lib/types';
 
 export interface UpcomingFixture {
   fixture: FixtureDto;
